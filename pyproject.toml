@@ -4,8 +4,6 @@ version = "0.1.6"
 description = "A simple llm library."
 authors = ["vikyw89 <vikyw89@gmail.com>"]
 readme = "README.md"
-package-mode = true
-packages = [{include = "scripts"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -23,8 +21,8 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-cli = "scripts.cli:app"
-start = "scripts.start:run"
-lint = "scripts.lint:run"
-publish = "scripts.publish:run"
-test = "scripts.test:run"
+llmtext = "llmtext.scripts.cli:app"
+start = "llmtext.scripts.start:run"
+lint = "llmtext.scripts.lint:run"
+publish = "llmtext.scripts.publish:run"
+test = "llmtext.scripts.test:run"
