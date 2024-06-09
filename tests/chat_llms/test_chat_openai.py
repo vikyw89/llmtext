@@ -6,9 +6,9 @@ def test_openai_arun():
     import asyncio
 
     async def arun():
-        from llmtext.chat_llms.openai import ChatOpenaiLLM
+        from llmtext.chat_llms.openai import ChatOpenAI
 
-        llm = ChatOpenaiLLM()
+        llm = ChatOpenAI()
         llm.add_message({"role": "system", "content": "You are a helpful assistant."})
         llm.add_message({"role": "user", "content": "What is the capital of France?"})
         res = await llm.arun()
@@ -20,9 +20,9 @@ def test_openai_stream():
     import asyncio
 
     async def astream():
-        from llmtext.chat_llms.openai import ChatOpenaiLLM
+        from llmtext.chat_llms.openai import ChatOpenAI
 
-        llm = ChatOpenaiLLM()
+        llm = ChatOpenAI()
         llm.add_message({"role": "system", "content": "You are a helpful assistant."})
         llm.add_message({"role": "user", "content": "What is the capital of France?"})
         stream = await llm.astream()
@@ -37,9 +37,9 @@ def test_openai_structured_extraction():
     import asyncio
 
     async def astructured_extraction():
-        from llmtext.chat_llms.openai import ChatOpenaiLLM
+        from llmtext.chat_llms.openai import ChatOpenAI
 
-        llm = ChatOpenaiLLM()
+        llm = ChatOpenAI()
 
         llm.add_message({"role": "system", "content": "Extract what the user asks from the following conversations."})
         llm.add_message({"role": "user", "content": "What is the capital of France?"})

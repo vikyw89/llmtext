@@ -10,7 +10,7 @@ from llmtext.chat_llms.base import (
 )
 
 
-class ChatTogetheraiLLM(BaseChatLLM):
+class ChatTogetherAI(BaseChatLLM):
     def __init__(
         self,
         model: str = "mistralai/Mistral-7B-Instruct-v0.1",

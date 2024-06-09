@@ -11,7 +11,7 @@ from llmtext.chat_llms.base import (
 )
 
 
-class ChatOpenaiLLM(BaseChatLLM):
+class ChatOpenAI(BaseChatLLM):
     def __init__(
         self,
         model: str = "gpt-3.5-turbo",

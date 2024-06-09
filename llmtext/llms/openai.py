@@ -5,7 +5,7 @@ from openai import AsyncOpenAI
 import instructor
 
 
-class OpenaiLLM(BaseLLM):
+class OpenAILLM(BaseLLM):
     def __init__(
         self,
         model: str = "gpt-3.5-turbo",

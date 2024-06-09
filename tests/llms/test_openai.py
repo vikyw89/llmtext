@@ -6,9 +6,9 @@ def test_openai_arun():
     import asyncio
 
     async def arun():
-        from llmtext.llms.openai import OpenaiLLM
+        from llmtext.llms.openai import OpenAILLM
 
-        llm = OpenaiLLM()
+        llm = OpenAILLM()
         res = await llm.arun(text="What is the capital of France?")
         assert res is not None
 
@@ -18,9 +18,9 @@ def test_openai_stream():
     import asyncio
 
     async def astream():
-        from llmtext.llms.openai import OpenaiLLM
+        from llmtext.llms.openai import OpenAILLM
 
-        llm = OpenaiLLM()
+        llm = OpenAILLM()
         async for res in llm.astream("What is the capital of France?"):
             assert isinstance(res, str) 
 
@@ -31,9 +31,9 @@ def test_openai_structured_extraction():
     import asyncio
 
     async def astructured_extraction():
-        from llmtext.llms.openai import OpenaiLLM
+        from llmtext.llms.openai import OpenAILLM
 
-        llm = OpenaiLLM()
+        llm = OpenAILLM()
 
         class ExtractedData(BaseModel):
             name: Annotated[str, Field(description="Name of the city")]

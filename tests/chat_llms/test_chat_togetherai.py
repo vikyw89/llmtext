@@ -7,9 +7,9 @@ def test_togetherai_arun():
     import asyncio
 
     async def arun():
-        from llmtext.chat_llms.togetherai import ChatTogetheraiLLM
+        from llmtext.chat_llms.togetherai import ChatTogetherAI
 
-        llm = ChatTogetheraiLLM()
+        llm = ChatTogetherAI()
         llm.add_message({"role": "system", "content": "You are a helpful assistant."})
         llm.add_message({"role": "user", "content": "What is the capital of France?"})
         res = await llm.arun()
@@ -22,9 +22,9 @@ def test_togetherai_stream():
     import asyncio
 
     async def astream():
-        from llmtext.chat_llms.togetherai import ChatTogetheraiLLM
+        from llmtext.chat_llms.togetherai import ChatTogetherAI
 
-        llm = ChatTogetheraiLLM()
+        llm = ChatTogetherAI()
         llm.add_message({"role": "system", "content": "You are a helpful assistant."})
         llm.add_message({"role": "user", "content": "What is the capital of France?"})
         stream = await llm.astream()
@@ -39,9 +39,9 @@ def test_togetherai_structured_extraction():
     import asyncio
 
     async def astructured_extraction():
-        from llmtext.chat_llms.togetherai import ChatTogetheraiLLM
+        from llmtext.chat_llms.togetherai import ChatTogetherAI
 
-        llm = ChatTogetheraiLLM()
+        llm = ChatTogetherAI()
 
         llm.add_message(
             {
