@@ -15,7 +15,7 @@ class TogetherAILLM(BaseLLM):
         *args,
         **kwargs,
     ) -> None:
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.model = model
         self.base_url = base_url
         self.max_retries = max_retries
