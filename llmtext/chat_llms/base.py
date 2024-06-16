@@ -1,10 +1,8 @@
 from abc import abstractmethod
-from openai import AsyncStream
+from typing import AsyncIterable
 from instructor.client import T
 from openai.types.chat import (
     ChatCompletionMessageParam,
-    ChatCompletionMessage,
-    ChatCompletionChunk,
 )
 
 
@@ -16,14 +14,14 @@ class BaseChatLLM:
         self.messages = messages
 
     @abstractmethod
-    async def arun(self) -> ChatCompletionMessage:
+    async def arun(self) -> str:
         pass
 
     def add_message(self, message: ChatCompletionMessageParam) -> None:
         self.messages.append(message)
 
     @abstractmethod
-    async def astream(self) -> AsyncStream[ChatCompletionChunk]:
+    async def astream(self) -> AsyncIterable[str]:
         pass
 
     @abstractmethod

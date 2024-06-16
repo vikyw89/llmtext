@@ -1,11 +1,9 @@
 import os
+from typing import AsyncIterable
 import instructor
-from openai import NOT_GIVEN, AsyncOpenAI, AsyncStream
-from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
+from openai import AsyncOpenAI
 from llmtext.chat_llms.base import BaseChatLLM
 from llmtext.chat_llms.base import (
-    ChatCompletionMessage,
-    ChatCompletionChunk,
     T,
 )
 
@@ -14,37 +12,35 @@ class ChatTogetherAI(BaseChatLLM):
     def __init__(
         self,
         model: str = "mistralai/Mistral-7B-Instruct-v0.1",
-        api_key: str = os.getenv("TOGETHERAI_API_KEY", "") or "",
-        tools: list[ChatCompletionToolParam] = [],
         max_retries: int = 2,
-        base_url: str = "https://api.together.xyz/v1",
+        client: AsyncOpenAI = AsyncOpenAI(
+            api_key=os.getenv("TOGETHERAI_API_KEY", ""),
+            base_url="https://api.together.xyz/v1",
+        ),
         *args,
         **kwargs
     ) -> None:
         super(self.__class__, self).__init__(*args, **kwargs)
         self.model = model
-        self.api_key = api_key
-        self.tools = tools if tools is not None else NOT_GIVEN
         self.max_retries = max_retries
-        self.base_url = base_url
-        self.client = AsyncOpenAI(
-            api_key=self.api_key, max_retries=self.max_retries, base_url=self.base_url
-        )
+        self.client = client
         self.structured_client = instructor.from_openai(self.client)
 
-    async def arun(self) -> ChatCompletionMessage:
+    async def arun(self) -> str:
         response = await self.client.chat.completions.create(
             messages=self.messages,
             model=self.model,
-            tools=self.tools,
         )
-        return response.choices[0].message
+        return response.choices[0].message.content or ""
 
-    async def astream(self) -> AsyncStream[ChatCompletionChunk]:
+    async def astream(self) -> AsyncIterable[str]:
         stream = await self.client.chat.completions.create(
-            messages=self.messages, model=self.model, stream=True, tools=self.tools
+            messages=self.messages, model=self.model, stream=True
         )
-        return stream
+        async for chunk in stream:
+            content = chunk.choices[0].delta.content
+            if content:
+                yield content
 
     async def astructured_extraction(self, output_class: type[T]) -> T:
         response = await self.structured_client.chat.completions.create(

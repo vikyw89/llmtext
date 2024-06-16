@@ -9,19 +9,18 @@ class TogetherAILLM(BaseLLM):
     def __init__(
         self,
         model: str = "mistralai/Mistral-7B-Instruct-v0.1",
-        api_key: str = os.getenv("TOGETHERAI_API_KEY", ""),
         max_retries: int = 2,
-        base_url: str = "https://api.together.xyz/v1",
+        client: AsyncOpenAI = AsyncOpenAI(
+            api_key=os.getenv("TOGETHERAI_API_KEY", ""),
+            base_url="https://api.together.xyz/v1",
+        ),
         *args,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.model = model
-        self.base_url = base_url
         self.max_retries = max_retries
-        self.client = AsyncOpenAI(
-            api_key=api_key, max_retries=max_retries, base_url=base_url
-        )
+        self.client = client
         self.structured_client = instructor.from_openai(self.client)
 
     async def arun(self, text: str) -> str:
