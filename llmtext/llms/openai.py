@@ -1,6 +1,5 @@
 import os
-from typing import AsyncGenerator
-
+from typing import AsyncIterable, Iterable
 from llmtext.llms.base import BaseLLM, T
 from openai import AsyncOpenAI
 import instructor
@@ -10,7 +9,7 @@ class OpenAILLM(BaseLLM):
     def __init__(
         self,
         model: str = "gpt-3.5-turbo",
-        max_retries: int = 2,
+        max_retries: int = 3,
         client: AsyncOpenAI = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY", "")),
         *args,
         **kwargs,
@@ -21,7 +20,7 @@ class OpenAILLM(BaseLLM):
         self.client = client
         self.structured_client = instructor.from_openai(self.client)
 
-    async def astream(self, text: str) -> AsyncGenerator[str, None]:
+    async def astream(self, text: str) -> AsyncIterable[str]:
         stream = await self.client.chat.completions.create(
             model=self.model, messages=[{"role": "user", "content": text}], stream=True
         )
@@ -57,3 +56,27 @@ class OpenAILLM(BaseLLM):
         )
 
         return response.choices[0].message.content or ""
+
+    async def astream_structured_extraction(
+        self,
+        text: str,
+        output_class: type[T],
+        prompt: str = "Let's think step by step. Given a text, extract structured data from it.",
+    ) -> AsyncIterable[T]:
+        stream: AsyncIterable[output_class] = (
+            await self.structured_client.chat.completions.create(
+                model=self.model,
+                response_model=Iterable[output_class],
+                max_retries=self.max_retries,
+                stream=True,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": prompt,
+                    },
+                    {"role": "user", "content": text},
+                ],
+            )
+        )
+
+        return stream

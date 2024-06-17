@@ -1,12 +1,8 @@
 import os
-from typing import AsyncIterable
+from typing import AsyncGenerator, Iterable
 import instructor
 from openai import AsyncOpenAI
-
-from llmtext.chat_llms.base import BaseChatLLM
-from llmtext.chat_llms.base import (
-    T,
-)
+from llmtext.chat_llms.base import BaseChatLLM, T
 
 
 class ChatOpenAI(BaseChatLLM):
@@ -31,7 +27,7 @@ class ChatOpenAI(BaseChatLLM):
         )
         return response.choices[0].message.content or ""
 
-    async def astream(self) -> AsyncIterable[str]:
+    async def astream(self) -> AsyncGenerator[str, None]:
         stream = await self.client.chat.completions.create(
             messages=self.messages, model=self.model, stream=True
         )
@@ -50,3 +46,17 @@ class ChatOpenAI(BaseChatLLM):
         )
         return response
 
+    async def astream_structured_extraction(
+        self, output_class: type[T]
+    ) -> AsyncGenerator[T, None]:
+        stream: AsyncGenerator[output_class, None] = (
+            await self.structured_client.chat.completions.create(
+                model=self.model,
+                response_model=Iterable[output_class],
+                max_retries=self.max_retries,
+                stream=True,
+                messages=self.messages,
+            )
+        )
+
+        return stream

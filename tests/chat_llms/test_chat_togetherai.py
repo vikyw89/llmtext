@@ -1,13 +1,12 @@
 from typing import Annotated
 from pydantic import BaseModel, Field
-from llmtext.chat_llms.base import ChatCompletionChunk
+from llmtext.chat_llms.togetherai import ChatTogetherAI
+import asyncio
 
 
 def test_togetherai_arun():
-    import asyncio
 
     async def arun():
-        from llmtext.chat_llms.togetherai import ChatTogetherAI
 
         llm = ChatTogetherAI()
         llm.add_message({"role": "system", "content": "You are a helpful assistant."})
@@ -19,24 +18,21 @@ def test_togetherai_arun():
 
 
 def test_togetherai_stream():
-    import asyncio
 
     async def astream():
-        from llmtext.chat_llms.togetherai import ChatTogetherAI
 
         llm = ChatTogetherAI()
         llm.add_message({"role": "system", "content": "You are a helpful assistant."})
         llm.add_message({"role": "user", "content": "What is the capital of France?"})
-        stream = await llm.astream()
+        stream = llm.astream()
 
         async for chunk in stream:
-            assert isinstance(chunk, ChatCompletionChunk)
+            assert isinstance(chunk, str)
 
     asyncio.run(astream())
 
 
-def test_togetherai_structured_extraction():
-    import asyncio
+def test_togetherai_astructured_extraction():
 
     async def astructured_extraction():
         from llmtext.chat_llms.togetherai import ChatTogetherAI
@@ -68,3 +64,36 @@ def test_togetherai_structured_extraction():
         assert isinstance(res, ExtractedData)
 
     asyncio.run(astructured_extraction())
+
+
+# def test_chat_togetherai_astream_structured_extraction():
+
+#     llm = ChatTogetherAI()
+
+#     class ExtractedData(BaseModel):
+#         name: Annotated[str, Field(description="Name of the city")]
+#         description: Annotated[str, Field(description="Description of the city")]
+
+#     async def arun():
+#         llm.messages = [
+#             {
+#                 "role": "system",
+#                 "content": "Extract what the user asks from the following conversations.",
+#             },
+#             {
+#                 "role": "user",
+#                 "content": "The capital of Germany is Berlin. It's a beautiful city. The capital of France is Paris. It's a beautiful city.",
+#             },
+#         ]
+
+#         res = await llm.astream_structured_extraction(
+#             output_class=ExtractedData,
+#         )
+
+#         assert isinstance(res, AsyncGenerator)
+
+#         async for chunk in res:
+#             assert isinstance(chunk, ExtractedData)
+#             print(chunk.model_dump())
+
+#     asyncio.run(arun())

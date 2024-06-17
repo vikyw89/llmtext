@@ -1,4 +1,4 @@
 def run():
     import subprocess
 
-    subprocess.run(args="pytest -v -s -x", shell=True)
+    subprocess.run(args="pytest -v -rP -x", shell=True)
