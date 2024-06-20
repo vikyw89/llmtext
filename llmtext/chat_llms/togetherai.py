@@ -21,5 +21,5 @@ class ChatTogetherAI(ChatOpenAI):
         self.client = client
         self.structured_client = instructor.from_openai(self.client)
 
-    async def astream_structured_extraction(self, output_class: type[T]) -> AsyncGenerator[T, None]:
-        raise NotImplementedError
+    # async def astream_structured_extraction(self, output_class: type[T]) -> AsyncGenerator[T, None]:
+    #     raise NotImplementedError

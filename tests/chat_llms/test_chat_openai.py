@@ -81,7 +81,7 @@ def test_chat_openai_astream_structured_extraction():
             },
             {
                 "role": "user",
-                "content": "The capital of Germany is Berlin. It's a beautiful city. The capital of France is Paris. It's a beautiful city.",
+                "content": "Generate cities and descriptions",
             },
         ]
 

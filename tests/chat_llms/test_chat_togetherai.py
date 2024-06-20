@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, AsyncGenerator
 from pydantic import BaseModel, Field
 from llmtext.chat_llms.togetherai import ChatTogetherAI
 import asyncio
@@ -66,34 +66,34 @@ def test_togetherai_astructured_extraction():
     asyncio.run(astructured_extraction())
 
 
-# def test_chat_togetherai_astream_structured_extraction():
+def test_chat_togetherai_astream_structured_extraction():
 
-#     llm = ChatTogetherAI()
+    llm = ChatTogetherAI()
 
-#     class ExtractedData(BaseModel):
-#         name: Annotated[str, Field(description="Name of the city")]
-#         description: Annotated[str, Field(description="Description of the city")]
+    class ExtractedData(BaseModel):
+        name: Annotated[str, Field(description="Name of the city")]
+        description: Annotated[str, Field(description="Description of the city")]
 
-#     async def arun():
-#         llm.messages = [
-#             {
-#                 "role": "system",
-#                 "content": "Extract what the user asks from the following conversations.",
-#             },
-#             {
-#                 "role": "user",
-#                 "content": "The capital of Germany is Berlin. It's a beautiful city. The capital of France is Paris. It's a beautiful city.",
-#             },
-#         ]
+    async def arun():
+        llm.messages = [
+            {
+                "role": "system",
+                "content": "Extract what the user asks from the following conversations.",
+            },
+            {
+                "role": "user",
+                "content": "The capital of Germany is Berlin. It's a beautiful city. The capital of France is Paris. It's a beautiful city.",
+            },
+        ]
 
-#         res = await llm.astream_structured_extraction(
-#             output_class=ExtractedData,
-#         )
+        res = await llm.astream_structured_extraction(
+            output_class=ExtractedData,
+        )
 
-#         assert isinstance(res, AsyncGenerator)
+        assert isinstance(res, AsyncGenerator)
 
-#         async for chunk in res:
-#             assert isinstance(chunk, ExtractedData)
-#             print(chunk.model_dump())
+        async for chunk in res:
+            assert isinstance(chunk, ExtractedData)
+            print(chunk.model_dump())
 
-#     asyncio.run(arun())
+    asyncio.run(arun())

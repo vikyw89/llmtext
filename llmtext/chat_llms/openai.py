@@ -9,7 +9,7 @@ class ChatOpenAI(BaseChatLLM):
     def __init__(
         self,
         model: str = "gpt-3.5-turbo",
-        max_retries: int = 2,
+        max_retries: int = 3,
         client: AsyncOpenAI = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY", "")),
         *args,
         **kwargs
@@ -41,7 +41,7 @@ class ChatOpenAI(BaseChatLLM):
         response = await self.structured_client.chat.completions.create(
             messages=self.messages,
             model=self.model,
-            max_retries=3,
+            max_retries=self.max_retries,
             response_model=output_class,
         )
         return response
@@ -50,11 +50,10 @@ class ChatOpenAI(BaseChatLLM):
         self, output_class: type[T]
     ) -> AsyncGenerator[T, None]:
         stream: AsyncGenerator[output_class, None] = (
-            await self.structured_client.chat.completions.create(
+            self.structured_client.chat.completions.create_partial(
                 model=self.model,
-                response_model=Iterable[output_class],
+                response_model=output_class,
                 max_retries=self.max_retries,
-                stream=True,
                 messages=self.messages,
             )
         )

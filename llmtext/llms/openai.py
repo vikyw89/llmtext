@@ -64,11 +64,10 @@ class OpenAILLM(BaseLLM):
         prompt: str = "Let's think step by step. Given a text, extract structured data from it.",
     ) -> AsyncIterable[T]:
         stream: AsyncIterable[output_class] = (
-            await self.structured_client.chat.completions.create(
+            self.structured_client.chat.completions.create_partial(
                 model=self.model,
-                response_model=Iterable[output_class],
+                response_model=output_class,
                 max_retries=self.max_retries,
-                stream=True,
                 messages=[
                     {
                         "role": "system",
