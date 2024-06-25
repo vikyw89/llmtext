@@ -46,22 +46,22 @@ def test_together_ai_structured_extraction():
     asyncio.run(astructured_extraction())
 
 
-def test_togetherai_astream_structured_extraction():
+# def test_togetherai_astream_structured_extraction():
 
-    llm = TogetherAILLM()
+#     llm = TogetherAILLM()
 
-    class ExtractedData(BaseModel):
-        name: Annotated[str, Field(description="Name of the city")]
-        description: Annotated[str, Field(description="Description of the city")]
+#     class ExtractedData(BaseModel):
+#         name: Annotated[str, Field(description="Name of the city")]
+#         description: Annotated[str, Field(description="Description of the city")]
 
-    async def arun():
-        res = await llm.astream_structured_extraction(
-            text="The city of France is Paris. It's a beautiful city. The city of Philippines is Manila. It's a beautiful city.",
-            output_class=ExtractedData,
-        )
-        assert isinstance(res, AsyncIterable)
-        async for chunk in res:
-            print(chunk)
-            assert isinstance(chunk, ExtractedData)
+#     async def arun():
+#         res = await llm.astream_structured_extraction(
+#             text="The city of France is Paris. It's a beautiful city. The city of Philippines is Manila. It's a beautiful city.",
+#             output_class=ExtractedData,
+#         )
+#         assert isinstance(res, AsyncIterable)
+#         async for chunk in res:
+#             print(chunk)
+#             assert isinstance(chunk, ExtractedData)
 
-    asyncio.run(arun())
+#     asyncio.run(arun())

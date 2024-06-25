@@ -25,5 +25,3 @@ class BaseLLM:
     @abstractmethod
     async def astructured_extraction(self, text: str, output_class: T) -> T:
         pass
-
-

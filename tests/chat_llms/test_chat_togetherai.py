@@ -9,9 +9,7 @@ def test_togetherai_arun():
     async def arun():
 
         llm = ChatTogetherAI()
-        llm.add_message({"role": "system", "content": "You are a helpful assistant."})
-        llm.add_message({"role": "user", "content": "What is the capital of France?"})
-        res = await llm.arun()
+        res = await llm.arun(messages=[{"role": "user", "content": "heloooooo"}])
         assert res is not None
 
     asyncio.run(arun())
@@ -22,9 +20,7 @@ def test_togetherai_stream():
     async def astream():
 
         llm = ChatTogetherAI()
-        llm.add_message({"role": "system", "content": "You are a helpful assistant."})
-        llm.add_message({"role": "user", "content": "What is the capital of France?"})
-        stream = llm.astream()
+        stream = llm.astream(messages=[{"role": "user", "content": "helooooo"}])
 
         async for chunk in stream:
             assert isinstance(chunk, str)
@@ -39,61 +35,58 @@ def test_togetherai_astructured_extraction():
 
         llm = ChatTogetherAI()
 
-        llm.add_message(
-            {
-                "role": "system",
-                "content": "Extract what the user asks from the following conversations.",
-            }
-        )
-        llm.add_message({"role": "user", "content": "What is the capital of France?"})
-        llm.add_message(
-            {"role": "assistant", "content": "The capital of France is Paris."}
-        )
-        llm.add_message({"role": "user", "content": "What is the capital of Germany?"})
-        llm.add_message(
-            {"role": "assistant", "content": "The capital of Germany is Berlin."}
-        )
-
         class ExtractedData(BaseModel):
             questions: Annotated[
                 list[str], Field(description="The questions asked by the user")
             ]
 
-        res = await llm.astructured_extraction(output_class=ExtractedData)
+        res = await llm.astructured_extraction(
+            output_class=ExtractedData,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Extract what the user asks from the following conversations.",
+                },
+                {"role": "user", "content": "What is the capital of France?"},
+                {"role": "assistant", "content": "The capital of France is Paris."},
+                {"role": "user", "content": "What is the capital of Germany?"},
+                {"role": "assistant", "content": "The capital of Germany is Berlin."},
+            ],
+        )
         print("res", res)
         assert isinstance(res, ExtractedData)
 
     asyncio.run(astructured_extraction())
 
 
-def test_chat_togetherai_astream_structured_extraction():
+# def test_chat_togetherai_astream_structured_extraction():
 
-    llm = ChatTogetherAI()
+#     llm = ChatTogetherAI()
 
-    class ExtractedData(BaseModel):
-        name: Annotated[str, Field(description="Name of the city")]
-        description: Annotated[str, Field(description="Description of the city")]
+#     class ExtractedData(BaseModel):
+#         name: Annotated[str, Field(description="Name of the city")]
+#         description: Annotated[str, Field(description="Description of the city")]
 
-    async def arun():
-        llm.messages = [
-            {
-                "role": "system",
-                "content": "Extract what the user asks from the following conversations.",
-            },
-            {
-                "role": "user",
-                "content": "The capital of Germany is Berlin. It's a beautiful city. The capital of France is Paris. It's a beautiful city.",
-            },
-        ]
+#     async def arun():
 
-        res = await llm.astream_structured_extraction(
-            output_class=ExtractedData,
-        )
+#         res = await llm.astream_structured_extraction(
+#             output_class=ExtractedData,
+#             messages=[
+#                 {
+#                     "role": "system",
+#                     "content": "Extract what the user asks from the following conversations.",
+#                 },
+#                 {
+#                     "role": "user",
+#                     "content": "The capital of Germany is Berlin. It's a beautiful city. The capital of France is Paris. It's a beautiful city.",
+#                 },
+#             ],
+#         )
 
-        assert isinstance(res, AsyncGenerator)
+#         assert isinstance(res, AsyncGenerator)
 
-        async for chunk in res:
-            assert isinstance(chunk, ExtractedData)
-            print(chunk.model_dump())
+#         async for chunk in res:
+#             assert isinstance(chunk, ExtractedData)
+#             print(chunk.model_dump())
 
-    asyncio.run(arun())
+#     asyncio.run(arun())

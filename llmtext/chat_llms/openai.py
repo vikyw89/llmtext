@@ -1,8 +1,11 @@
 import os
-from typing import AsyncGenerator, Iterable
+from typing import AsyncGenerator
 import instructor
 from openai import AsyncOpenAI
 from llmtext.chat_llms.base import BaseChatLLM, T
+from openai.types.chat import (
+    ChatCompletionMessageParam,
+)
 
 
 class ChatOpenAI(BaseChatLLM):
@@ -20,26 +23,29 @@ class ChatOpenAI(BaseChatLLM):
         self.client = client
         self.structured_client = instructor.from_openai(self.client)
 
-    async def arun(self) -> str:
+    async def arun(self, messages: list[ChatCompletionMessageParam]) -> str:
         response = await self.client.chat.completions.create(
-            messages=self.messages,
+            messages=messages,
             model=self.model,
         )
-        return response.choices[0].message.content or ""
+        message = response.choices[0].message.content
+        return message or ""
 
-    async def astream(self) -> AsyncGenerator[str, None]:
+    async def astream(
+        self, messages: list[ChatCompletionMessageParam]
+    ) -> AsyncGenerator[str, None]:
         stream = await self.client.chat.completions.create(
-            messages=self.messages, model=self.model, stream=True
+            messages=messages, model=self.model, stream=True
         )
 
         async for chunk in stream:
-            delta_content = chunk.choices[0].delta.content
-            if delta_content:
-                yield delta_content
+            yield chunk.choices[0].delta.content or ""
 
-    async def astructured_extraction(self, output_class: type[T]) -> T:
+    async def astructured_extraction(
+        self, messages: list[ChatCompletionMessageParam], output_class: type[T]
+    ) -> T:
         response = await self.structured_client.chat.completions.create(
-            messages=self.messages,
+            messages=messages,
             model=self.model,
             max_retries=self.max_retries,
             response_model=output_class,
@@ -47,15 +53,14 @@ class ChatOpenAI(BaseChatLLM):
         return response
 
     async def astream_structured_extraction(
-        self, output_class: type[T]
+        self, messages: list[ChatCompletionMessageParam], output_class: type[T]
     ) -> AsyncGenerator[T, None]:
         stream: AsyncGenerator[output_class, None] = (
             self.structured_client.chat.completions.create_partial(
                 model=self.model,
                 response_model=output_class,
                 max_retries=self.max_retries,
-                messages=self.messages,
+                messages=messages,
             )
         )
-
         return stream

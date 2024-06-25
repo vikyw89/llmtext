@@ -7,11 +7,6 @@ from openai.types.chat import (
 
 
 class BaseChatLLM:
-    def __init__(
-        self,
-        messages: list[ChatCompletionMessageParam] = [],
-    ) -> None:
-        self.messages = messages
 
     @abstractmethod
     async def arun(self) -> str:
@@ -30,6 +25,3 @@ class BaseChatLLM:
         self, output_class: type[T]
     ) -> AsyncGenerator[T, None]:
         pass
-
-    def add_message(self, message: ChatCompletionMessageParam) -> None:
-        self.messages.append(message)

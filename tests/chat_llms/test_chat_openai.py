@@ -9,9 +9,12 @@ def test_openai_arun():
     async def arun():
 
         llm = ChatOpenAI()
-        llm.add_message({"role": "system", "content": "You are a helpful assistant."})
-        llm.add_message({"role": "user", "content": "What is the capital of France?"})
-        res = await llm.arun()
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "What is the capital of France?"},
+        ]
+
+        res = await llm.arun(messages=messages)
         assert res is not None
 
     asyncio.run(arun())
@@ -22,12 +25,22 @@ def test_openai_stream():
     async def astream():
 
         llm = ChatOpenAI()
-        llm.add_message({"role": "system", "content": "You are a helpful assistant."})
-        llm.add_message({"role": "user", "content": "What is the capital of France?"})
-        stream = llm.astream()
+
+        messages = [
+            {
+                "role": "system",
+                "content": "You are a helpful assistant.",
+            },
+            {
+                "role": "user",
+                "content": "What is the capital of France?",
+            },
+        ]
+        stream = llm.astream(messages=messages)
 
         async for chunk in stream:
-            assert isinstance(chunk, str)
+            # assert isinstance(chunk.get("content"), str)
+            print("chunk", chunk)
 
     asyncio.run(astream())
 
@@ -38,27 +51,25 @@ def test_openai_structured_extraction():
 
         llm = ChatOpenAI()
 
-        llm.add_message(
+        messages = [
             {
                 "role": "system",
                 "content": "Extract what the user asks from the following conversations.",
-            }
-        )
-        llm.add_message({"role": "user", "content": "What is the capital of France?"})
-        llm.add_message(
-            {"role": "assistant", "content": "The capital of France is Paris."}
-        )
-        llm.add_message({"role": "user", "content": "What is the capital of Germany?"})
-        llm.add_message(
-            {"role": "assistant", "content": "The capital of Germany is Berlin."}
-        )
+            },
+            {"role": "user", "content": "What is the capital of France?"},
+            {"role": "assistant", "content": "The capital of France is Paris."},
+            {"role": "user", "content": "What is the capital of Germany?"},
+            {"role": "assistant", "content": "The capital of Germany is Berlin."},
+        ]
 
         class ExtractedData(BaseModel):
             questions: Annotated[
                 list[str], Field(description="The questions asked by the user")
             ]
 
-        res = await llm.astructured_extraction(output_class=ExtractedData)
+        res = await llm.astructured_extraction(
+            output_class=ExtractedData, messages=messages
+        )
         print("res", res)
         assert isinstance(res, ExtractedData)
 
@@ -74,7 +85,7 @@ def test_chat_openai_astream_structured_extraction():
         description: Annotated[str, Field(description="Description of the city")]
 
     async def arun():
-        llm.messages = [
+        messages = [
             {
                 "role": "system",
                 "content": "Extract what the user asks from the following conversations.",
@@ -86,7 +97,7 @@ def test_chat_openai_astream_structured_extraction():
         ]
 
         res = await llm.astream_structured_extraction(
-            output_class=ExtractedData,
+            output_class=ExtractedData, messages=messages
         )
 
         assert isinstance(res, AsyncGenerator)

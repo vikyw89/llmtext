@@ -5,6 +5,7 @@ from openai import AsyncOpenAI
 from llmtext.chat_llms.openai import ChatOpenAI
 from llmtext.llms.base import T
 
+
 class ChatTogetherAI(ChatOpenAI):
     def __init__(
         self,
