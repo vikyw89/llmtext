@@ -1,32 +1,29 @@
 [tool.poetry]
 name = "llmtext"
-version = "3.0.0"
+version = "3.0.1"
 description = "A simple llm library."
 authors = ["vikyw89 <vikyw89@gmail.com>"]
 readme = "README.md"
+include = ["scripts"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 together = "^1.2.0"
 python-dotenv = "^1.0.0"
 instructor = "^1.3.0"
-typer = "^0.12.0"
-spacy = "^3.7.0"
 nest-asyncio = "^1.6.0"
-
-langchain = "^0.2.5"
 black = "^24.4.2"
+
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.2.2"
-ruff = "^0.4.8"
+pytest = "^8.2.0"
+ruff = "^0.4.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-llmtext = "llmtext.scripts.cli:app"
-start = "llmtext.scripts.start:run"
-lint = "llmtext.scripts.lint:run"
-publish = "llmtext.scripts.publish:run"
-test = "llmtext.scripts.test:run"
+start = "scripts.start:run"
+lint = "scripts.lint:run"
+publish = "scripts.publish:run"
+test = "scripts.test:run"

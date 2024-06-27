@@ -1,4 +1,4 @@
-from typing import Annotated, AsyncIterable
+from typing import Annotated
 from pydantic import BaseModel, Field
 from llmtext.text.index import Text
 import asyncio

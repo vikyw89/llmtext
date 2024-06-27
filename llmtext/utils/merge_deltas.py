@@ -4,7 +4,7 @@ from openai.types.chat.chat_completion_chunk import ChoiceDelta
 def merge_deltas(original: ChoiceDelta, delta: ChoiceDelta) -> ChoiceDelta:
     original_dict = original.model_dump()
     for key, value in dict(delta).items():
-        if value != None:
+        if value is not None:
             if isinstance(value, str):
                 if key in original_dict:
                     original_dict[key] = (original_dict[key] or "") + (value or "")

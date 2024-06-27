@@ -1,4 +1,4 @@
-from typing import Annotated, AsyncGenerator
+from typing import Annotated
 from pydantic import BaseModel, Field
 from llmtext.chat.index import Chat
 import asyncio
