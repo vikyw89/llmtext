@@ -1,33 +1,37 @@
-# import os
-# from typing import Annotated
-# from pydantic import BaseModel, Field
+import os
+from typing import Annotated
+from pydantic import BaseModel, Field
 
 
-# def test_tool_schema():
-#     from llmtext.tools.base import Tool
+def test_tool_schema():
+    from llmtext.tools.base import Tool
 
-#     class ToolInput(BaseModel):
-#         test: Annotated[str, Field(description="test field")]
+    class ToolInput(BaseModel):
+        test: Annotated[str, Field(description="test field")]
 
-#     async def test_tool(input: ToolInput) -> str:
-#         """always call this tool"""
-#         return "test"
+    class Tool2(BaseModel):
+        test2: str
 
-#     tool = Tool(afn=test_tool)
+    async def test_tool(input: ToolInput, input2: Tool2) -> str:
+        """always call this tool"""
+        return "test"
 
-#     print(tool.to_openai_schema())
+    tool = Tool(afn=test_tool)
 
-#     from openai import OpenAI
+    print(tool.to_openai_schema())
 
-#     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
+    from openai import OpenAI
 
-#     res = client.chat.completions.create(
-#         messages=[{"role": "user", "content": "call a tool for me"}],
-#         tools=[tool.to_openai_schema()],
-#         model="gpt-3.5-turbo",
-#     )
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
 
-#     print(res)
+    res = client.chat.completions.create(
+        messages=[{"role": "user", "content": "call a tool for me"}],
+        tools=[tool.to_openai_schema()],
+        model="gpt-3.5-turbo",
+        tool_choice="required",
+    )
+
+    print(res)
 
 
 # def test_agent_tools():

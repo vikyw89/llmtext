@@ -1,15 +1,19 @@
 from typing import Annotated, AsyncGenerator
 from pydantic import BaseModel, Field
-from llmtext.chat_llms.togetherai import ChatTogetherAI
+from llmtext.chat.index import Chat
 import asyncio
+from openai.types.chat import ChatCompletionMessageParam
 
 
 def test_togetherai_arun():
 
     async def arun():
 
-        llm = ChatTogetherAI()
-        res = await llm.arun(messages=[{"role": "user", "content": "heloooooo"}])
+        messages: list[ChatCompletionMessageParam] = [
+            {"role": "user", "content": "heloooooo"}
+        ]
+        llm = Chat(messages=messages)
+        res = await llm.arun_togetherai()
         assert res is not None
 
     asyncio.run(arun())
@@ -19,8 +23,11 @@ def test_togetherai_stream():
 
     async def astream():
 
-        llm = ChatTogetherAI()
-        stream = llm.astream(messages=[{"role": "user", "content": "helooooo"}])
+        messages: list[ChatCompletionMessageParam] = [
+            {"role": "user", "content": "heloooooo"}
+        ]
+        llm = Chat(messages=messages)
+        stream = llm.astream_togetherai()
 
         async for chunk in stream:
             assert isinstance(chunk, str)
@@ -31,27 +38,26 @@ def test_togetherai_stream():
 def test_togetherai_astructured_extraction():
 
     async def astructured_extraction():
-        from llmtext.chat_llms.togetherai import ChatTogetherAI
 
-        llm = ChatTogetherAI()
+        messages: list[ChatCompletionMessageParam] = [
+            {
+                "role": "system",
+                "content": "Extract what the user asks from the following conversations.",
+            },
+            {"role": "user", "content": "What is the capital of France?"},
+            {"role": "assistant", "content": "The capital of France is Paris."},
+            {"role": "user", "content": "What is the capital of Germany?"},
+            {"role": "assistant", "content": "The capital of Germany is Berlin."},
+        ]
+        llm = Chat(messages=messages)
 
         class ExtractedData(BaseModel):
             questions: Annotated[
                 list[str], Field(description="The questions asked by the user")
             ]
 
-        res = await llm.astructured_extraction(
+        res = await llm.astructured_extraction_togetherai(
             output_class=ExtractedData,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Extract what the user asks from the following conversations.",
-                },
-                {"role": "user", "content": "What is the capital of France?"},
-                {"role": "assistant", "content": "The capital of France is Paris."},
-                {"role": "user", "content": "What is the capital of Germany?"},
-                {"role": "assistant", "content": "The capital of Germany is Berlin."},
-            ],
         )
         print("res", res)
         assert isinstance(res, ExtractedData)
