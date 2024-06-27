@@ -26,10 +26,10 @@ pip install llmtext
 To generate text outputs from text inputs:
 
 ```python
-from llmtext.llms.openai import OpenaiLLM
+from llmtext.text.index import Text
 
-llm = OpenaiLLM()
-res = await llm.arun(text="What is the capital of France?")
+text = Text(text="What is the capital of France ?")
+res = await llm.arun_openai(text="What is the capital of France?")
 ```
 
 ### Text to Pydantic Class Transformation
@@ -37,30 +37,30 @@ res = await llm.arun(text="What is the capital of France?")
 To convert text inputs into a Pydantic class:
 
 ```python
-from llmtext.llms.openai import OpenaiLLM
+from llmtext.text.index import Text
 
-llm = OpenaiLLM()
+text = Text(text="The city of France is Paris. It's a beautiful city.")
 
 class ExtractedData(BaseModel):
     name: Annotated[str, Field(description="Name of the city")]
     description: Annotated[str, Field(description="Description of the city")]
 
-res = await llm.astructured_extraction(text="The city of France is Paris. It's a beautiful city.", output_class=ExtractedData)
+res = await text.astructured_extraction_openai(output_class=ExtractedData)
 assert isinstance(res, ExtractedData)
 ```
 
 ### Access open source models through togetherAI
 
 ```python
-from llmtext.llms.togetherai import TogetherAILLM
+from llmtext.text.index import Text
 
-llm = TogetherAILLM()
+llm = Text(text="The city of France is Paris. It's a beautiful city.")
 
 class ExtractedData(BaseModel):
     name: Annotated[str, Field(description="Name of the city")]
     description: Annotated[str, Field(description="Description of the city")]
 
-res = await llm.astructured_extraction(text="The city of France is Paris. It's a beautiful city.", output_class=ExtractedData)
+res = await llm.astructured_extraction_togetherai(output_class=ExtractedData)
 
 assert isinstance(res, ExtractedData)
 ```
@@ -91,4 +91,4 @@ Special thanks to OpenAI for providing robust schema support and TogetherAI for 
 
 ---
 
-For more information, please refer to the [documentation](https://github.com/yourusername/llmtext).
+For more information, please refer to the [documentation](https://github.com/vikyw89/llmtext).
