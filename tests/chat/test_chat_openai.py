@@ -1,6 +1,6 @@
 from typing import Annotated, AsyncGenerator
 from pydantic import BaseModel, Field
-from llmtext.chat.index import Chat
+from llmtext.chat import Chat
 import asyncio
 from openai.types.chat import ChatCompletionMessageParam
 
@@ -15,7 +15,7 @@ def test_openai_arun():
 
         llm = Chat(messages=messages)
 
-        res = await llm.arun_openai()
+        res = await llm.arun()
         assert res is not None
 
     asyncio.run(arun())
@@ -31,7 +31,7 @@ def test_openai_stream():
         ]
 
         llm = Chat(messages=messages)
-        stream = llm.astream_openai()
+        stream = llm.astream()
 
         async for chunk in stream:
             # assert isinstance(chunk.get("content"), str)
@@ -61,7 +61,7 @@ def test_openai_structured_extraction():
                 list[str], Field(description="The questions asked by the user")
             ]
 
-        res = await llm.astructured_extraction_openai(output_class=ExtractedData)
+        res = await llm.astructured_extraction(output_class=ExtractedData)
         print("res", res)
         assert isinstance(res, ExtractedData)
 
@@ -88,7 +88,7 @@ def test_chat_openai_astream_structured_extraction():
 
     async def arun():
 
-        res = await llm.astream_structured_extraction_openai(output_class=ExtractedData)
+        res = await llm.astream_structured_extraction(output_class=ExtractedData)
 
         assert isinstance(res, AsyncGenerator)
 

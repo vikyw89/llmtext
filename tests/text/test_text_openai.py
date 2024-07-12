@@ -1,6 +1,6 @@
 from typing import Annotated, AsyncIterable
 from pydantic import BaseModel, Field
-from llmtext.text.index import Text
+from llmtext.text import Text
 import asyncio
 
 
@@ -9,7 +9,7 @@ def test_openai_arun():
     async def arun():
 
         llm = Text(text="What is the capital of France ?")
-        res = await llm.arun_openai()
+        res = await llm.arun()
         assert res is not None
 
     asyncio.run(arun())
@@ -21,7 +21,7 @@ def test_openai_stream():
 
         llm = Text(text="What is the capital of Japan ?")
 
-        async for res in llm.astream_openai():
+        async for res in llm.astream():
             assert isinstance(res, str)
 
     asyncio.run(astream())
@@ -37,7 +37,7 @@ def test_openai_structured_extraction():
             name: Annotated[str, Field(description="Name of the city")]
             description: Annotated[str, Field(description="Description of the city")]
 
-        res = await llm.astructured_extraction_openai(
+        res = await llm.astructured_extraction(
             output_class=ExtractedData,
         )
 
@@ -60,7 +60,7 @@ def test_openai_astream_structured_extraction():
         cities: Annotated[list[City], Field(description="Cities")]
 
     async def arun():
-        res = await llm.astream_structured_extraction_openai(
+        res = await llm.astream_structured_extraction(
             output_class=ExtractedData,
         )
 
