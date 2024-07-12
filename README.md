@@ -69,12 +69,25 @@ assert isinstance(res, ExtractedData)
 
 To configure `llmtext` for using OpenAI's schema or TogetherAI's open-source LLMs, you can set the necessary API keys in your environment variables or configuration file.
 
-### Example Configuration
+### Example Configuration to use togetherai, or openrouter or any other open-source LLMs that support openai schema
 
 ```.env
-TOGETHERAI_API_KEY=
-TOGETHER_API_BASE_URL=https://api.together.xyz/v1
 OPENAI_API_KEY=
+OPENAI_BASE_URL=https://api.together.xyz/v1
+OPENAI_MODEL=
+```
+
+or input it upon class initialization
+
+```
+llm = Text(
+    text="What is the capital of France ?",
+    openai_client=AsyncOpenAI(
+        api_key=os.getenv("OPENROUTER_API_KEY", ""),
+        base_url=os.getenv("OPENROUTER_BASE_URL"),
+    ),
+    openai_model="anthropic/claude-3-haiku",
+)
 ```
 
 ## Contributing
