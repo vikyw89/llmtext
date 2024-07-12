@@ -1,5 +1,7 @@
 # llmtext
 
+![alt text](/docs/7f5db8f9-3ebe-4f32-a1b6-a38a6e13f1f6.jpeg)
+
 `llmtext` is a simple yet powerful library designed to interact with large language models (LLMs) as straightforward functions. It provides easy-to-use interfaces for both input-output text transformations and input-to-Pydantic class conversions, leveraging the power of open-source LLMs and OpenAI's schema.
 
 ## Features
@@ -49,20 +51,23 @@ res = await text.astructured_extraction(output_class=ExtractedData)
 assert isinstance(res, ExtractedData)
 ```
 
-### Access open source models through togetherAI
+### Text to Streaming Pydantic Class Transformation
+
+To convert text inputs into a Pydantic class:
 
 ```python
-from llmtext.text.index import Text
+from llmtext.text import Text
 
-llm = Text(text="The city of France is Paris. It's a beautiful city.")
+text = Text(text="The city of France is Paris. It's a beautiful city.")
 
 class ExtractedData(BaseModel):
     name: Annotated[str, Field(description="Name of the city")]
     description: Annotated[str, Field(description="Description of the city")]
 
-res = await llm.astructured_extraction(output_class=ExtractedData)
+stream = await text.astream_structured_extraction(output_class=ExtractedData)
 
-assert isinstance(res, ExtractedData)
+async for res in stream:
+    assert isinstance(res, ExtractedData)
 ```
 
 ## Configuration
