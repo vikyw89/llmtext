@@ -26,10 +26,10 @@ pip install llmtext
 To generate text outputs from text inputs:
 
 ```python
-from llmtext.text.index import Text
+from llmtext.text import Text
 
 text = Text(text="What is the capital of France ?")
-res = await llm.arun_openai(text="What is the capital of France?")
+res = await llm.arun(text="What is the capital of France?")
 ```
 
 ### Text to Pydantic Class Transformation
@@ -37,7 +37,7 @@ res = await llm.arun_openai(text="What is the capital of France?")
 To convert text inputs into a Pydantic class:
 
 ```python
-from llmtext.text.index import Text
+from llmtext.text import Text
 
 text = Text(text="The city of France is Paris. It's a beautiful city.")
 
@@ -45,7 +45,7 @@ class ExtractedData(BaseModel):
     name: Annotated[str, Field(description="Name of the city")]
     description: Annotated[str, Field(description="Description of the city")]
 
-res = await text.astructured_extraction_openai(output_class=ExtractedData)
+res = await text.astructured_extraction(output_class=ExtractedData)
 assert isinstance(res, ExtractedData)
 ```
 
@@ -60,7 +60,7 @@ class ExtractedData(BaseModel):
     name: Annotated[str, Field(description="Name of the city")]
     description: Annotated[str, Field(description="Description of the city")]
 
-res = await llm.astructured_extraction_togetherai(output_class=ExtractedData)
+res = await llm.astructured_extraction(output_class=ExtractedData)
 
 assert isinstance(res, ExtractedData)
 ```

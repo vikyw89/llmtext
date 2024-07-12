@@ -16,7 +16,7 @@ class Text:
             api_key=os.getenv("OPENAI_API_KEY", ""),
             base_url=os.getenv("OPENAI_API_BASE_URL", "https://api.openai.com/v1"),
         ),
-        openai_model: str = "gpt-3.5-turbo",
+        openai_model: str = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
     ) -> None:
         self.text = text
         self.openai_client = openai_client
