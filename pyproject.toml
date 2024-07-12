@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llmtext"
-version = "4.0.0"
+version = "4.0.1"
 description = "A simple llm library."
 authors = ["vikyw89 <vikyw89@gmail.com>"]
 readme = "README.md"
@@ -13,6 +13,7 @@ python-dotenv = "^1.0.0"
 instructor = "^1.3.0"
 nest-asyncio = "^1.6.0"
 black = "^24.4.2"
+pydantic = "2.7.*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.0"
