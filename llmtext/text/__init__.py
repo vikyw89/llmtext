@@ -50,9 +50,12 @@ class Text:
         prompt: str = "Let's think step by step. Given a text, extract structured data from it.",
         max_retries: int = 3,
         temperature: float = 0.0,
+        instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
         **kwargs
     ) -> T:
-        structured_client = instructor.from_openai(self.openai_client)
+        structured_client = instructor.from_openai(
+            self.openai_client, mode=instructor_mode
+        )
         response = await structured_client.chat.completions.create(
             model=self.openai_model,
             messages=[
@@ -75,9 +78,12 @@ class Text:
         prompt: str = "Let's think step by step. Given a text, extract structured data from it.",
         max_retries: int = 3,
         temperature: float = 0.0,
+        instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
         **kwargs
     ) -> AsyncIterable[T]:
-        structured_client = instructor.from_openai(self.openai_client)
+        structured_client = instructor.from_openai(
+            self.openai_client, mode=instructor_mode
+        )
         stream: AsyncIterable[output_class] = (
             structured_client.chat.completions.create_partial(
                 model=self.openai_model,

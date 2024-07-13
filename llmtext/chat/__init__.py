@@ -43,9 +43,12 @@ class Chat:
         output_class: type[T],
         max_retries: int = 3,
         temperature: float = 0.0,
+        instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
         **kwargs
     ) -> T:
-        structured_client = instructor.from_openai(self.openai_client)
+        structured_client = instructor.from_openai(
+            self.openai_client, mode=instructor_mode
+        )
         response = await structured_client.chat.completions.create(
             messages=self.messages,  # type: ignore
             model=self.openai_model,
@@ -61,9 +64,12 @@ class Chat:
         output_class: type[T],
         max_retries: int = 3,
         temperature: float = 0.0,
+        instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
         **kwargs
     ) -> AsyncGenerator[T, None]:
-        structured_client = instructor.from_openai(self.openai_client)
+        structured_client = instructor.from_openai(
+            self.openai_client, mode=instructor_mode
+        )
         stream: AsyncGenerator[output_class, None] = (
             structured_client.chat.completions.create_partial(
                 model=self.openai_model,

@@ -1,37 +1,57 @@
+import os
 from typing import Annotated, AsyncIterable
 from pydantic import BaseModel, Field
 from llmtext.text import Text
 import asyncio
+from openai import AsyncOpenAI
 
 
-def test_openai_arun():
+def test_arun():
 
     async def arun():
 
-        llm = Text(text="What is the capital of France ?")
+        llm = Text(
+            text="What is the capital of France ?",
+            openai_client=AsyncOpenAI(
+                api_key=os.getenv("OPENROUTER_API_KEY", ""),
+                base_url=os.getenv("OPENROUTER_BASE_URL"),
+            ),
+            openai_model="mistralai/mistral-7b-instruct-v0.3",
+        )
         res = await llm.arun()
         assert res is not None
 
     asyncio.run(arun())
 
 
-def test_openai_stream():
+def test_stream():
 
     async def astream():
-
-        llm = Text(text="What is the capital of Japan ?")
-
+        llm = Text(
+            text="What is the capital of France ?",
+            openai_client=AsyncOpenAI(
+                api_key=os.getenv("OPENROUTER_API_KEY", ""),
+                base_url=os.getenv("OPENROUTER_BASE_URL"),
+            ),
+            openai_model="mistralai/mistral-7b-instruct-v0.3",
+        )
         async for res in llm.astream():
             assert isinstance(res, str)
 
     asyncio.run(astream())
 
 
-def test_openai_structured_extraction():
+def test_structured_extraction():
 
     async def astructured_extraction():
-
-        llm = Text(text="The city of France is Paris. It's a beautiful city.")
+        llm = Text(
+            text="Paris is the capital of France.",
+            openai_client=AsyncOpenAI(
+                api_key=os.getenv("OPENROUTER_API_KEY", ""),
+                base_url=os.getenv("OPENROUTER_BASE_URL"),
+            ),
+            openai_model="mistralai/mistral-7b-instruct-v0.3",
+        )
 
         class ExtractedData(BaseModel):
             name: Annotated[str, Field(description="Name of the city")]
@@ -46,10 +66,15 @@ def test_openai_structured_extraction():
     asyncio.run(astructured_extraction())
 
 
-def test_openai_astream_structured_extraction():
+def test_astream_structured_extraction():
 
     llm = Text(
-        text="The city of France is Paris. It's a beautiful city. The city of Philippines is Manila. It's a beautiful city."
+        text="Paris is the capital of France.",
+        openai_client=AsyncOpenAI(
+            api_key=os.getenv("OPENROUTER_API_KEY", ""),
+            base_url=os.getenv("OPENROUTER_BASE_URL"),
+        ),
+        openai_model="mistralai/mistral-7b-instruct-v0.3",
     )
 
     class City(BaseModel):

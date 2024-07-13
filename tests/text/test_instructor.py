@@ -3,14 +3,11 @@ def test_instructor():
     import instructor
     from pydantic import BaseModel
 
-
     client = instructor.from_openai(openai.OpenAI())
-
 
     class User(BaseModel):
         name: str
         age: int
-
 
     user_stream = client.chat.completions.create_partial(
         model="gpt-3.5-turbo",

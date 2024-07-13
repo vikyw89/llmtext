@@ -1,6 +1,5 @@
 import os
 from typing import Annotated, AsyncIterable
-import instructor
 from pydantic import BaseModel, Field
 from llmtext.text import Text
 import asyncio
@@ -17,7 +16,7 @@ def test_arun():
                 api_key=os.getenv("OPENROUTER_API_KEY", ""),
                 base_url=os.getenv("OPENROUTER_BASE_URL"),
             ),
-            openai_model="anthropic/claude-3-haiku",
+            openai_model="gryphe/mythomax-l2-13b",
         )
         res = await llm.arun()
         assert res is not None
@@ -34,7 +33,7 @@ def test_stream():
                 api_key=os.getenv("OPENROUTER_API_KEY", ""),
                 base_url=os.getenv("OPENROUTER_BASE_URL"),
             ),
-            openai_model="anthropic/claude-3-haiku",
+            openai_model="gryphe/mythomax-l2-13b",
         )
         async for res in llm.astream():
             assert isinstance(res, str)
@@ -51,7 +50,7 @@ def test_structured_extraction():
                 api_key=os.getenv("OPENROUTER_API_KEY", ""),
                 base_url=os.getenv("OPENROUTER_BASE_URL"),
             ),
-            openai_model="anthropic/claude-3-haiku",
+            openai_model="gryphe/mythomax-l2-13b",
         )
 
         class ExtractedData(BaseModel):
@@ -59,7 +58,7 @@ def test_structured_extraction():
             description: Annotated[str, Field(description="Description of the city")]
 
         res = await llm.astructured_extraction(
-            output_class=ExtractedData, instructor_mode=instructor.Mode.MD_JSON
+            output_class=ExtractedData,
         )
 
         assert isinstance(res, ExtractedData)
@@ -75,7 +74,7 @@ def test_astream_structured_extraction():
             api_key=os.getenv("OPENROUTER_API_KEY", ""),
             base_url=os.getenv("OPENROUTER_BASE_URL"),
         ),
-        openai_model="anthropic/claude-3-haiku",
+        openai_model="gryphe/mythomax-l2-13b",
     )
 
     class City(BaseModel):
@@ -87,7 +86,7 @@ def test_astream_structured_extraction():
 
     async def arun():
         res = await llm.astream_structured_extraction(
-            output_class=ExtractedData, instructor_mode=instructor.Mode.MD_JSON
+            output_class=ExtractedData,
         )
 
         assert isinstance(res, AsyncIterable)
