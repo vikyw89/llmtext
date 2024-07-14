@@ -1,5 +1,5 @@
 import os
-from typing import AsyncGenerator, Sequence
+from typing import AsyncGenerator, Iterable, Sequence
 import instructor
 from instructor.client import T
 from openai import AsyncOpenAI
@@ -9,7 +9,7 @@ from openai.types.chat import ChatCompletionMessageParam
 class Chat:
     def __init__(
         self,
-        messages: Sequence[ChatCompletionMessageParam],
+        messages: list[ChatCompletionMessageParam],
         openai_model: str = "gpt-3.5-turbo",
         openai_client: AsyncOpenAI = AsyncOpenAI(
             api_key=os.getenv("OPENAI_API_KEY", ""),
@@ -50,11 +50,12 @@ class Chat:
             self.openai_client, mode=instructor_mode
         )
         response = await structured_client.chat.completions.create(
-            messages=self.messages,  # type: ignore
+            messages=self.messages, 
             model=self.openai_model,
             max_retries=max_retries,
             temperature=temperature,
             response_model=output_class,
+            validation_context={"text_chunk": self.messages[0].get("content","")},
             **kwargs,
         )
         return response
@@ -78,6 +79,7 @@ class Chat:
                 max_retries=max_retries,
                 messages=self.messages,  # type: ignore
                 stream=True,
+                validation_context={"text_chunk": self.messages[0].get("content","")},
                 **kwargs,
             )
         )

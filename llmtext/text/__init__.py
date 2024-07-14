@@ -68,6 +68,7 @@ class Text:
             temperature=temperature,
             max_retries=max_retries,
             response_model=output_class,
+            validation_context={"text_chunk": self.text},
             **kwargs
         )
         return response
@@ -97,6 +98,7 @@ class Text:
                     },
                     {"role": "user", "content": self.text},
                 ],
+                validation_context={"text_chunk": self.text},
                 **kwargs
             )
         )

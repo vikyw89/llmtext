@@ -1,55 +1,37 @@
-import os
-from typing import Annotated
+from typing import Annotated, Any, Literal, Type, Union
 from pydantic import BaseModel, Field
+import pytest
+from pydantic import BaseModel
 
 
-def test_tool_schema():
-    from llmtext.tools.base import Tool
 
-    class ToolInput(BaseModel):
-        test: Annotated[str, Field(description="test field")]
+@pytest.mark.asyncio
+async def test_tool_class():
+    from llmtext.text import Text
 
-    class Tool2(BaseModel):
-        test2: str
+    class SearchNewsTool(BaseModel):
+        query: Annotated[str, Field(description="search query")]
 
-    async def test_tool(input: ToolInput, input2: Tool2) -> str:
-        """always call this tool"""
-        return "test"
+        async def arun(self) -> str:
+            return f"there's no result for: {self.query}"
 
-    tool = Tool(afn=test_tool)
+    class SearchInternetTool(BaseModel):
+        query: Annotated[str, Field(description="search query")]
 
-    print(tool.to_openai_schema())
+        async def arun(self) -> str:
+            return f"there's no result for: {self.query}"
 
-    from openai import OpenAI
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
+    tool_list = [SearchInternetTool, SearchNewsTool]
+    tool_tuple = tuple(tool_list)
+    tools = list[Union[*tool_tuple]]
 
-    res = client.chat.completions.create(
-        messages=[{"role": "user", "content": "call a tool for me"}],
-        tools=[tool.to_openai_schema()],
-        model="gpt-3.5-turbo",
-        tool_choice="required",
-    )
+    class ToolSelector(BaseModel):
+        choice: Annotated[tools, Field(description="Selected tool")] = []
+        response: Annotated[str, Field(description="Response to be sent to user")]
+
+    text = Text(text="find me tesla news and search internet for tesla price")
+
+    res = await text.astructured_extraction(output_class=ToolSelector)
 
     print(res)
-
-
-# def test_agent_tools():
-#     from llmtext.agents.openai_agent import OpenaiAgent
-
-#     agent = OpenaiAgent()
-
-#     class ToolInput(BaseModel):
-#         """test tool input"""
-
-#         test: Annotated[str, Field(description="test field")]
-
-#     async def test_tool(input: ToolInput) -> str:
-#         """always call this tool"""
-#         return "test"
-
-#     agent.atools = test_tool
-#     agent.add_message({"role": "user", "content": "call a tool for me"})
-#     import asyncio
-
-#     asyncio.run(agent.arun_step())

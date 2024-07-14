@@ -22,7 +22,7 @@ async def test_stream():
 
 
 @pytest.mark.asyncio
-async def test_structured_extraction():
+async def test_astructured_extraction():
 
     llm = Text(text="The city of France is Paris. It's a beautiful city.")
 
