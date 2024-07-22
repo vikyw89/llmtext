@@ -52,7 +52,7 @@ async def astructured_extraction(
     model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     max_retries: int = 3,
     temperature: float = 0.0,
-    instructor_mode: instructor.Mode = instructor.Mode.TOOLS,
+    instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
     **kwargs,
 ) -> T:
     structured_client = instructor.from_openai(client, mode=instructor_mode)
@@ -80,7 +80,7 @@ async def astream_structured_extraction(
     model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     max_retries: int = 3,
     temperature: float = 0.0,
-    instructor_mode: instructor.Mode = instructor.Mode.TOOLS,
+    instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
     **kwargs,
 ) -> AsyncGenerator[T, None]:
 

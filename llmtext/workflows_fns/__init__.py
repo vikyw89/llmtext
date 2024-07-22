@@ -22,10 +22,10 @@ async def aextract_tools(
     messages: list[Message],
     tools: list[type[RunnableTool]],
     tool_selector_client=AsyncOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE_URL")
+        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL")
     ),
     tool_selector_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-    instructor_mode: instructor.Mode = instructor.Mode.TOOLS,
+    instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
     **kwargs,
 ) -> list[RunnableTool]:
     tool_selector = tools_to_tool_selector(tools=tools)
@@ -39,7 +39,7 @@ async def aextract_tools(
         **kwargs,
     )
 
-    return tool_selector.choices
+    return tool_selector.tool_calls
 
 
 async def acall_tools(
@@ -65,10 +65,10 @@ async def acall_tools(
 async def aevaluate_results(
     messages: list[Message],
     evaluator_client=AsyncOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE_URL")
+        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL")
     ),
-    evaluator_model: str = "gpt-4o-mini",
-    instructor_mode: instructor.Mode = instructor.Mode.TOOLS,
+    evaluator_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+    instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
     **kwargs,
 ) -> int:
 
@@ -79,7 +79,7 @@ async def aevaluate_results(
             int, Field(description="0 if it doesn't answer original query")
         ] = 0
 
-    evaluation: QAEvaluation = await messages_fns.astructured_extraction(
+    evaluation = await messages_fns.astructured_extraction(
         messages=messages,
         client=evaluator_client,
         model=evaluator_model,
@@ -88,24 +88,23 @@ async def aevaluate_results(
         **kwargs,
     )
 
-    if isinstance(evaluation, QAEvaluation):
-        return evaluation.score
-
-    return 0
+    return evaluation.score
 
 
 async def astream_agentic_workflow(
     messages: list[Message],
     tools: list[type[RunnableTool]] = [],
     chat_client=AsyncOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE_URL")
+        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL")
     ),
     tool_selector_client=AsyncOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE_URL")
+        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL")
     ),
+    tool_selector_instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
     evaluator_client=AsyncOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE_URL")
+        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL")
     ),
+    evaluator_instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
     chat_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     tool_selector_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     evaluator_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
@@ -124,6 +123,7 @@ async def astream_agentic_workflow(
             tools=tools,
             tool_selector_client=tool_selector_client,
             tool_selector_model=tool_selector_model,
+            instructor_mode=tool_selector_instructor_mode,
             **kwargs,
         )
 
@@ -188,6 +188,8 @@ async def astream_agentic_workflow(
             messages=messages,
             evaluator_client=evaluator_client,
             evaluator_model=evaluator_model,
+            instructor_mode=evaluator_instructor_mode,
+            **kwargs,
         )
 
         yield Event(

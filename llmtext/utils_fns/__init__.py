@@ -13,13 +13,16 @@ def messages_to_openai_messages(
     return parsed_messages
 
 
-def tools_to_tool_selector(tools: list[Type[RunnableTool]]):
+def tools_to_tool_selector(
+    tools: list[Type[RunnableTool]],
+    prompt: str = "Selected tools to call in order to give the best response to user's query",
+):
     tuple_tools = tuple(tools)
     tools = list[Union[*tuple_tools]]  # type: ignore
 
     class ToolSelector(BaseModel):
-        """Selected tools"""
+        f"""{prompt}"""
 
-        choices: Annotated[tools, Field(description="Selected tool to call")] = []  # type: ignore
+        tool_calls: Annotated[tools, Field(description="Tools to call")] = []  # type: ignore
 
     return ToolSelector
