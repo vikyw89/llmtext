@@ -1,6 +1,19 @@
 from abc import abstractmethod
-from typing import Any
-from pydantic import BaseModel
+from typing import Annotated, Any
+from typing import Literal, TypedDict
+from pydantic import BaseModel, Field
+
+
+class Message(BaseModel):
+    role: str
+    content: str
+
+
+class Event(TypedDict):
+    step: int
+    type: Literal["tool_call", "tool_output", "message_stream", "message", "score"]
+    id: str
+    content: str
 
 
 class RunnableTool(BaseModel):
@@ -8,7 +21,7 @@ class RunnableTool(BaseModel):
     async def arun(self) -> str:
         pass
 
-    def to_context(self) -> dict[str, Any]:
+    def get_tool_call(self) -> dict[str, Any]:
         tool_name = self.__class__.__name__
         return {
             "type": "tool_call",
@@ -26,3 +39,11 @@ class RunnableTool(BaseModel):
             "params": self.model_dump(),
             "output": await self.arun(),
         }
+
+
+class ToolSelector(BaseModel):
+    """Selected tools"""
+
+    choices: Annotated[
+        list[RunnableTool], Field(description="Selected tool to call")
+    ] = []

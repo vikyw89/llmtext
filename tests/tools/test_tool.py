@@ -5,15 +5,19 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_tool_class():
-    from llmtext.text import Text
+    from llmtext.texts_fns import astructured_extraction
 
     class SearchNewsTool(BaseModel):
+        """Tool to search news"""
+
         query: Annotated[str, Field(description="search query")]
 
         async def arun(self) -> str:
             return f"there's no result for: {self.query}"
 
     class SearchInternetTool(BaseModel):
+        """Tool to search internet"""
+
         query: Annotated[str, Field(description="search query")]
 
         async def arun(self) -> str:
@@ -21,14 +25,14 @@ async def test_tool_class():
 
     tool_list = [SearchInternetTool, SearchNewsTool]
     tool_tuple = tuple(tool_list)
-    tools = list[Union[*tool_tuple]]
+    tools = list[Union[*tool_tuple]]  # type: ignore
 
     class ToolSelector(BaseModel):
-        choice: Annotated[tools, Field(description="Selected tool")] = []
+        choice: Annotated[tools, Field(description="Selected tool")] = []  # type: ignore
         response: Annotated[str, Field(description="Response to be sent to user")]
 
-    text = Text(text="find me tesla news and search internet for tesla price")
-
-    res = await text.astructured_extraction(output_class=ToolSelector)
+    res = await astructured_extraction(
+        text="what's the weather today ?", output_class=ToolSelector
+    )
 
     print(res)

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llmtext"
-version = "4.0.5"
+version = "5.0.0"
 description = "A simple llm library."
 authors = ["vikyw89 <vikyw89@gmail.com>"]
 readme = "README.md"
