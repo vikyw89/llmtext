@@ -109,7 +109,7 @@ async def astream_agentic_workflow(
     chat_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     tool_selector_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     evaluator_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-    max_step=3,
+    max_step=2,
     min_score: Annotated[int, Field(ge=0, le=5)] = 3,
     **kwargs,
 ) -> AsyncGenerator[Event, None]:

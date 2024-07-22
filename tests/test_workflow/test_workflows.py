@@ -90,5 +90,9 @@ async def test_astream_agentic_workflow():
         tools=[SearchInternetTool],
     )
 
+    ids = {}
     async for chunk in stream:
         print(chunk)
+        if chunk["id"] not in ids:
+            ids[chunk["id"]] = True
+            print("\n")
