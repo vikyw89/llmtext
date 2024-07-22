@@ -1,7 +1,9 @@
+import os
 from typing import Annotated
 from pydantic import Field
 import pytest
 import logging
+from openai import AsyncOpenAI
 
 
 @pytest.mark.asyncio
@@ -45,7 +47,12 @@ async def test_arun_tool_selector(caplog):
                     "role": "user",
                     "content": "what's 1000 + 2000 + 3000 + 4000 ?",
                 }
-            ]
+            ],
+            openai_client=AsyncOpenAI(
+                api_key=os.getenv("OPENROUTER_API_KEY"),
+                base_url=os.getenv("OPENROUTER_BASE_URL"),
+            ),
+            openai_model="anthropic/claude-3-haiku",
         ),
         tools=[SearchTool, CalculateTool, MultiplyTool],
     )
@@ -96,7 +103,12 @@ async def test_stream_synthesize(caplog):
                     "role": "user",
                     "content": "what's 1000 + 2000 + 3000 + 4000 ?",
                 }
-            ]
+            ],
+            openai_client=AsyncOpenAI(
+                api_key=os.getenv("OPENROUTER_API_KEY"),
+                base_url=os.getenv("OPENROUTER_BASE_URL"),
+            ),
+            openai_model="anthropic/claude-3-haiku",
         ),
         tools=[SearchTool, CalculateTool, MultiplyTool],
     )
@@ -108,7 +120,7 @@ async def test_stream_synthesize(caplog):
 
 
 @pytest.mark.asyncio
-async def test_stream_events_openai(caplog):
+async def test_stream_events_haiku(caplog):
     caplog.set_level(logging.DEBUG)
     from llmtext.agent import Agent
     from llmtext.chat import Chat
@@ -152,6 +164,11 @@ async def test_stream_events_openai(caplog):
                     "content": "Write a comprehensive comparison between NVIDIA vs Intel. List all factors, give stars between 0 to 5 and sources. Tally the sources score at the end",
                 },
             ],
+            openai_client=AsyncOpenAI(
+                api_key=os.getenv("OPENROUTER_API_KEY"),
+                base_url=os.getenv("OPENROUTER_BASE_URL"),
+            ),
+            openai_model="anthropic/claude-3-haiku",
         ),
         tools=[SearchTool, CalculateTool, MultiplyTool],
     )

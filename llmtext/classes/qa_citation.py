@@ -24,6 +24,7 @@ class Fact(BaseModel):
         for match in re.finditer(re.escape(quote), context):
             yield match.span()
 
+
 class QuestionAnswer(BaseModel):
     question: str = Field(...)
     answer: List[Fact] = Field(...)

@@ -1,6 +1,6 @@
 import asyncio
-from typing import Annotated, AsyncIterable, Iterable, Literal, TypedDict, Union
-
+import json
+from typing import Annotated, AsyncIterable, Literal, TypedDict, Union
 from pydantic import BaseModel, Field
 from llmtext.chat import Chat
 from llmtext.tools import RunnableTool
@@ -11,18 +11,30 @@ logger = logging.getLogger(__name__)
 
 
 class Event(TypedDict):
+    step: int
     type: Literal["tool_call", "tool_output", "message_stream", "message"]
     id: str
     content: str
 
 
 class Agent:
-    def __init__(self, chat: Chat, tools: list[type[RunnableTool]], **kwargs) -> None:
+    def __init__(
+        self,
+        chat: Chat,
+        tools: list[type[RunnableTool]],
+        max_step=20,
+        min_score: Annotated[int, Field(ge=0, le=5)] = 3,
+        prune_tools_between_steps=False,
+    ) -> None:
         self.chat = chat
         self.tools = tools
         self.selected_tools: list[RunnableTool] = []
         self.tools_output: list[str] = []
-        self.is_final = False
+        self.max_step = max_step
+        self.step = 0
+        self.min_score = min_score
+        self.score = 0
+        self.prune_tools_between_steps = prune_tools_between_steps
 
     async def arun_tool_selector(self, **kwargs) -> list[RunnableTool]:
         tuple_tools = tuple(self.tools)
@@ -36,21 +48,22 @@ class Agent:
         response = await self.chat.astructured_extraction(
             output_class=ToolSelector, **kwargs
         )
+        del self.chat.messages[-1]
 
         self.selected_tools = response.choices
 
-        parsed = []
+        tool_calls = []
 
         for tool in self.selected_tools:
-            parsed.append(tool.to_context())
+            tool_calls.append(tool.to_context())
 
-        del self.chat.messages[-1]
-        if len(parsed) > 0:
-            context = "\n".join(parsed)
+        if len(tool_calls) > 0:
             self.chat.messages.append(
-                {"role": "assistant", "content": f"I will call these tools:\n{context}"}
+                {
+                    "role": "assistant",
+                    "content": json.dumps(tool_calls, ensure_ascii=False),
+                }
             )
-
         return response.choices
 
     async def arun_tool(self, **kwargs) -> list[str]:
@@ -61,79 +74,108 @@ class Agent:
         self.tools_output = await asyncio.gather(*tasks)
 
         if len(self.tools_output) > 0:
-            context = "Here's the result of the tool call: \n"
+            tools_call = []
 
             for tool, output in zip(self.selected_tools, self.tools_output):
-                context += f"""ToolOutput: 
-{output}\n"""
+                tools_call.append(output)
 
-        self.chat.messages.append({"role": "assistant", "content": context})
+            self.chat.messages.pop(-1)
+
+            self.chat.messages.append(
+                {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        tools_call, ensure_ascii=False, default=lambda o: o.__dict__
+                    ),
+                }
+            )
+
         return self.tools_output
 
-    async def arun_synthesize(self, **kwargs):
-        class Response(BaseModel):
-            """Synthesized response"""
+    async def arun_synthesize(self, **kwargs) -> str:
 
-            response: Annotated[str, Field(description="Response to be sent to user")]
-            is_final: Annotated[bool, Field(description="Is the response final?")] = (
-                True
-            )
+        response = await self.chat.arun(**kwargs)
 
-        res = await self.chat.astructured_extraction(output_class=Response, **kwargs)
-        del self.chat.messages[-1]
-        self.chat.messages.append({"role": "assistant", "content": res.response})
-        self.is_final = res.is_final
+        self.chat.messages.append({"role": "assistant", "content": response})
+
+        return response
 
     async def astream_synthesize(self, **kwargs) -> AsyncIterable[str]:
-        class Response(BaseModel):
-            """Synthesized response"""
 
-            response: Annotated[str, Field(description="Response to be sent to user")]
-            is_final: Annotated[bool, Field(description="Is the response final?")] = (
-                True
-            )
-
-        stream = await self.chat.astream_structured_extraction(
-            output_class=Response, **kwargs
-        )
+        stream = self.chat.astream(**kwargs)
 
         final_stream = ""
         async for chunk in stream:
-            if chunk is None or chunk.response is None:
-                continue
-            new_token = chunk.response[len(final_stream) :]
-            if len(new_token) == 0:
-                continue
-            yield new_token
-            final_stream = chunk.response
-            self.is_final = chunk.is_final
+            yield chunk
+            final_stream += chunk
 
-        del self.chat.messages[-1]
         self.chat.messages.append({"role": "assistant", "content": final_stream})
 
-    async def arun_all(self, **kwargs) -> str:
-        final_messages = []
-        while self.is_final is False:
-            logger.debug(self.chat.messages)
-            await self.arun_tool_selector(**kwargs)
-            logger.debug(self.chat.messages[-1])
-            await self.arun_tool(**kwargs)
-            logger.debug(self.chat.messages[-1])
-            await self.arun_synthesize(**kwargs)
-            logger.debug(self.chat.messages[-1])
-            final_messages.append(self.chat.messages[-1].get("content", ""))
+    async def arun_score(self, **kwargs) -> int:
+        class ResponseScore(BaseModel):
+            """Response score"""
 
-        return final_messages[-1]
+            score: Annotated[
+                int, Field(description="Response score, from 0 - bad to 5 - perfect")
+            ]
+
+        response = await self.chat.astructured_extraction(
+            output_class=ResponseScore, **kwargs
+        )
+        self.chat.messages.pop(-1)
+
+        return response.score
+
+    async def arun_all(self, **kwargs) -> str:
+        final_response = ""
+        while self.score <= self.min_score and self.step <= self.max_step:
+            await self.arun_tool_selector(**kwargs)
+            await self.arun_tool(**kwargs)
+            final_response = await self.arun_synthesize(**kwargs)
+
+            self.score = await self.arun_score(**kwargs)
+        return final_response
 
     async def astream_events(self, **kwargs) -> AsyncIterable[Event]:
-        while self.is_final is False:
+        while self.score <= self.min_score and self.step <= self.max_step:
+            self.step += 1
+
             await self.arun_tool_selector(**kwargs)
-            yield Event(type="tool_call", content="", id=str(uuid4()))
+            last_message = self.chat.messages[-1].get("content", "")
+            if isinstance(last_message, str):
+                yield Event(
+                    step=self.step,
+                    type="tool_call",
+                    content=last_message,
+                    id=str(uuid4()),
+                )
+
             await self.arun_tool(**kwargs)
-            yield Event(type="tool_output", content="", id=str(uuid4()))
+            last_message = self.chat.messages[-1].get("content", "")
+            if isinstance(last_message, str):
+                yield Event(
+                    step=self.step,
+                    type="tool_output",
+                    content=last_message,
+                    id=str(uuid4()),
+                )
+
             stream = self.astream_synthesize(**kwargs)
             id = str(uuid4())
             async for chunk in stream:
-                yield Event(type="message_stream", content=chunk, id=id)
+                yield Event(step=self.step, type="message_stream", content=chunk, id=id)
+
             final_message = str(self.chat.messages[-1].get("content", ""))
-            yield Event(type="message", content=final_message, id=id)
+
+            yield Event(step=self.step, type="message", content=final_message, id=id)
+
+            if self.prune_tools_between_steps:
+                self.prune_tool_messages()
+
+            self.score = await self.arun_score(**kwargs)
+
+    def prune_tool_messages(self):
+        if len(self.tools_output) > 0:
+            self.chat.messages.pop(-2)
+            self.tools_output = []
+            self.selected_tools = []

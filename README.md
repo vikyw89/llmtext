@@ -70,6 +70,58 @@ async for res in stream:
     assert isinstance(res, ExtractedData)
 ```
 
+### Agents
+
+```python
+from llmtext.agent import Agent
+from llmtext.chat import Chat
+from llmtext.tools import RunnableTool
+
+class SearchTool(RunnableTool):
+    """Use this tool to search for news articles."""
+
+    query: Annotated[str, Field(description="search query")]
+
+    async def arun(self) -> str:
+        return f"there's no result for: {self.query}, please try again"
+
+class CalculateTool(RunnableTool):
+    """Use this tool to calculate the sum of two numbers."""
+
+    a: int
+    b: int
+
+    async def arun(self) -> int:
+        return self.a + self.b
+
+class MultiplyTool(RunnableTool):
+    """Use this tool to multiply 2 numbers"""
+
+    a: int
+    b: int
+
+    async def arun(self) -> int:
+        return self.a * self.b
+
+agent = Agent(
+    chat=Chat(
+        messages=[
+            {
+                "role": "user",
+                "content": "what's 1000 + 2000 + 3000 + 4000 ? After that multiple result by 6",
+            }
+        ]
+    ),
+    tools=[SearchTool, CalculateTool, MultiplyTool],
+)
+
+stream = agent.astream_events()
+
+async for chunk in stream:
+    print(chunk)
+    print("\n")
+```
+
 ## Configuration
 
 To configure `llmtext` for using OpenAI's schema or TogetherAI's open-source LLMs, you can set the necessary API keys in your environment variables or configuration file.

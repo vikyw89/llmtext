@@ -1,5 +1,5 @@
 import os
-from typing import AsyncGenerator, Iterable, Sequence
+from typing import AsyncGenerator
 import instructor
 from instructor.client import T
 from openai import AsyncOpenAI
@@ -50,12 +50,12 @@ class Chat:
             self.openai_client, mode=instructor_mode
         )
         response = await structured_client.chat.completions.create(
-            messages=self.messages, 
+            messages=self.messages,
             model=self.openai_model,
             max_retries=max_retries,
             temperature=temperature,
             response_model=output_class,
-            validation_context={"text_chunk": self.messages[0].get("content","")},
+            validation_context={"text_chunk": self.messages[0].get("content", "")},
             **kwargs,
         )
         return response
@@ -79,7 +79,7 @@ class Chat:
                 max_retries=max_retries,
                 messages=self.messages,  # type: ignore
                 stream=True,
-                validation_context={"text_chunk": self.messages[0].get("content","")},
+                validation_context={"text_chunk": self.messages[0].get("content", "")},
                 **kwargs,
             )
         )

@@ -2,7 +2,6 @@ import os
 from typing import Annotated, AsyncIterable
 from pydantic import BaseModel, Field
 from llmtext.text import Text
-import asyncio
 from openai import AsyncOpenAI
 import pytest
 

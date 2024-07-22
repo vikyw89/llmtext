@@ -1,8 +1,6 @@
-from typing import Annotated, Any, Literal, Type, Union
+from typing import Annotated, Union
 from pydantic import BaseModel, Field
 import pytest
-from pydantic import BaseModel
-
 
 
 @pytest.mark.asyncio
@@ -20,7 +18,6 @@ async def test_tool_class():
 
         async def arun(self) -> str:
             return f"there's no result for: {self.query}"
-
 
     tool_list = [SearchInternetTool, SearchNewsTool]
     tool_tuple = tuple(tool_list)
