@@ -11,7 +11,7 @@ class Message(BaseModel):
 
 class Event(TypedDict):
     step: int
-    type: Literal["tool_call", "tool_output", "message_stream", "message", "score"]
+    type: Literal["tool_call", "tool_output", "message_stream", "message", "feedback"]
     id: str
     content: str
 
@@ -47,3 +47,15 @@ class ToolSelector(BaseModel):
     choices: Annotated[
         list[RunnableTool], Field(description="Selected tool to call")
     ] = []
+
+
+class AnswerFeedback(BaseModel):
+    """Give feedback to your answer"""
+
+    answer_feedback: Annotated[
+        str | None,
+        Field(
+            description="Feedback to improve the answer, leave empty if none",
+            default=None,
+        ),
+    ]

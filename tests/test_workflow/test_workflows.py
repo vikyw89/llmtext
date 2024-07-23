@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 from pydantic import Field
 import pytest
@@ -77,15 +78,15 @@ async def test_astream_agentic_workflow():
         query: Annotated[str, Field(description="search query")]
 
         async def arun(self) -> str:
-            return f"there's no result for: {self.query}"
+            return "Tsunehiro Satoshi"
 
     stream = astream_agentic_workflow(
         messages=[
-            Message(role="user", content="what's the weather today ?"),
             Message(
-                role="assistant",
-                content="there's no result for: what's the weather today ?",
+                role="system",
+                content=f"""Let's think step by step. Use tool to help answering user's query. Don't make up the answer. Today is {datetime.now().strftime("%d/%m/%Y")}""",
             ),
+            Message(role="user", content="Who's the current ceo of Toyota motor ?"),
         ],
         tools=[SearchInternetTool],
     )

@@ -2,13 +2,15 @@ import asyncio
 import json
 import os
 from typing import (
-    Annotated,
     AsyncGenerator,
 )
 from openai import AsyncOpenAI
-from pydantic import BaseModel, Field
-from llmtext.data_types import Event, Message
-from llmtext.data_types import RunnableTool
+from llmtext.data_types import (
+    AnswerFeedback,
+    Event,
+    Message,
+    RunnableTool,
+)
 import logging
 from uuid import uuid4
 import instructor
@@ -48,7 +50,7 @@ async def acall_tools(
 
     tasks = []
     for tool in tools:
-        tasks.append(tool.arun())
+        tasks.append(tool.aget_tool_output())
 
     tools_output = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -57,7 +59,9 @@ async def acall_tools(
         if isinstance(tool_output, Exception):
             parsed_tools_output.append(str(tool_output))
         else:
-            parsed_tools_output.append(tool_output)
+            parsed_tools_output.append(
+                json.dumps(tool_output, ensure_ascii=False, default=str)
+            )
 
     return parsed_tools_output
 
@@ -70,25 +74,18 @@ async def aevaluate_results(
     evaluator_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
     **kwargs,
-) -> int:
+) -> AnswerFeedback:
 
-    class QAEvaluation(BaseModel):
-        """QA Evaluation Result"""
-
-        score: Annotated[
-            int, Field(description="0 if it doesn't answer original query")
-        ] = 0
-
-    evaluation = await messages_fns.astructured_extraction(
+    feedback = await messages_fns.astructured_extraction(
         messages=messages,
         client=evaluator_client,
         model=evaluator_model,
-        output_class=QAEvaluation,
+        output_class=AnswerFeedback,
         instructor_mode=instructor_mode,
         **kwargs,
     )
 
-    return evaluation.score
+    return feedback
 
 
 async def astream_agentic_workflow(
@@ -109,14 +106,24 @@ async def astream_agentic_workflow(
     tool_selector_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     evaluator_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     max_step=2,
-    min_score: Annotated[int, Field(ge=0, le=5)] = 3,
     **kwargs,
 ) -> AsyncGenerator[Event, None]:
 
-    step = 1
-    score = 0
+    step = 0
 
-    while True:
+    # retrieve system message
+    system_message = None
+    for message in messages:
+        if message.role == "system":
+            system_message = message
+            break
+
+    # retrieve last message from user
+    last_user_message = messages[-1]
+
+    while step <= max_step:
+        step += 1
+
         # extract tools
         tool_calls = await aextract_tools(
             messages=messages,
@@ -179,28 +186,38 @@ async def astream_agentic_workflow(
             content=final_content,
         )
 
-        step += 1
-        if step > max_step:
+        final_step_message = Message(role="assistant", content=final_content)
+
+        # add results to messages
+        messages.append(final_step_message)
+
+        # won't do evaluation if next step is max
+        if step + 1 > max_step:
             break
 
-        # evaluate score
-        score = await aevaluate_results(
-            messages=messages,
+        # self reflect
+        feedback = await aevaluate_results(
+            messages=(
+                [system_message]
+                if system_message
+                else [] + [last_user_message] + [final_step_message]
+            ),
             evaluator_client=evaluator_client,
             evaluator_model=evaluator_model,
             instructor_mode=evaluator_instructor_mode,
             **kwargs,
         )
 
-        yield Event(
-            step=step,
-            type="score",
-            id=str(uuid4()),
-            content=f"Score: {score}",
-        )
-
-        if score >= min_score:
+        if feedback.answer_feedback is None:
             break
 
-        # add results to messages
-        messages.append(Message(role="assistant", content=final_content))
+        yield Event(
+            step=step,
+            type="feedback",
+            id=str(uuid4()),
+            content=feedback.answer_feedback,
+        )
+
+        messages.append(Message(role="user", content=feedback.answer_feedback))
+
+    print("messages", messages)
