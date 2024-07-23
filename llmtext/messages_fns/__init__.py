@@ -10,7 +10,8 @@ from llmtext.utils_fns import messages_to_openai_messages
 async def agenerate(
     messages: list[Message],
     client=AsyncOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE_URL")
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
     ),
     model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     **kwargs,
@@ -28,7 +29,8 @@ async def agenerate(
 async def astream_generate(
     messages: list[Message],
     client=AsyncOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE_URL")
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
     ),
     model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     **kwargs,
@@ -47,7 +49,8 @@ async def astructured_extraction(
     messages: list[Message],
     output_class: Type[T],
     client=AsyncOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE_URL")
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
     ),
     model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     max_retries: int = 3,
@@ -75,7 +78,8 @@ async def astream_structured_extraction(
     messages: list[Message],
     output_class: type[T],
     client=AsyncOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_API_BASE_URL")
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
     ),
     model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     max_retries: int = 3,
