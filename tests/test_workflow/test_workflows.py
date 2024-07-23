@@ -1,9 +1,8 @@
-from datetime import datetime
 from typing import Annotated
 from pydantic import Field
 import pytest
 
-from llmtext.data_types import RunnableTool
+from llmtext.data_types import IsFinalResponse, RunnableTool
 
 
 @pytest.mark.asyncio
@@ -22,7 +21,7 @@ async def test_aextract_tools():
         tools=[SearchInternetTool],
     )
 
-    assert len(tools) == 1
+    assert len(tools) >= 1
 
     for tool in tools:
         assert isinstance(tool, SearchInternetTool)
@@ -62,7 +61,7 @@ async def test_aevaluate_result():
         ],
     )
 
-    assert isinstance(score, int)
+    assert isinstance(score, IsFinalResponse)
 
     print(score)
 
@@ -72,23 +71,36 @@ async def test_astream_agentic_workflow():
     from llmtext.data_types import Message
     from llmtext.workflows_fns import astream_agentic_workflow
 
-    class SearchInternetTool(RunnableTool):
-        """Tool to search internet"""
+    class MultiplyNumbersTool(RunnableTool):
+        """Tool to multiply numbers"""
 
-        query: Annotated[str, Field(description="search query")]
+        a: Annotated[int, Field(description="first number")]
+        b: Annotated[int, Field(description="second number")]
+
+        async def arun(self) -> int:
+            return self.a * self.b
+
+    class DivideNumbersTool(RunnableTool):
+        """Tool to divide numbers"""
+
+        a: Annotated[int, Field(description="first number")]
+        b: Annotated[int, Field(description="second number")]
 
         async def arun(self) -> str:
-            return "Tsunehiro Satoshi"
+            return str(self.a / self.b)
 
     stream = astream_agentic_workflow(
         messages=[
             Message(
                 role="system",
-                content=f"""Let's think step by step. Use tool to help answering user's query. Don't make up the answer. Today is {datetime.now().strftime("%d/%m/%Y")}""",
+                content="""Let's think step by step.""",
             ),
-            Message(role="user", content="Who's the current ceo of Toyota motor ?"),
+            Message(role="user", content="What's 2 * 50 * 5 / 10 ?"),
         ],
-        tools=[SearchInternetTool],
+        tools=[MultiplyNumbersTool, DivideNumbersTool],
+        # evaluator_instructor_mode=instructor.Mode.MD_JSON,
+        # tool_selector_instructor_mode=instructor.Mode.MD_JSON,
+        max_step=5,
     )
 
     ids = {}

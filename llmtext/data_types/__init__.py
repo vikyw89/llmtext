@@ -49,13 +49,13 @@ class ToolSelector(BaseModel):
     ] = []
 
 
-class AnswerFeedback(BaseModel):
-    """Give feedback to your answer"""
+class IsFinalResponse(BaseModel):
+    """Is the response final or not"""
 
-    answer_feedback: Annotated[
-        str | None,
+    is_final_response: Annotated[
+        bool,
         Field(
-            description="Feedback to improve the answer, leave empty if none",
-            default=None,
+            description="True if the response is final, False if the response is not final",
+            default=True,
         ),
     ]

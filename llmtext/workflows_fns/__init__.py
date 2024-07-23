@@ -6,8 +6,8 @@ from typing import (
 )
 from openai import AsyncOpenAI
 from llmtext.data_types import (
-    AnswerFeedback,
     Event,
+    IsFinalResponse,
     Message,
     RunnableTool,
 )
@@ -30,6 +30,9 @@ async def aextract_tools(
     instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
     **kwargs,
 ) -> list[RunnableTool]:
+    if len(tools) == 0:
+        return []
+
     tool_selector = tools_to_tool_selector(tools=tools)
 
     tool_selector = await messages_fns.astructured_extraction(
@@ -74,13 +77,13 @@ async def aevaluate_results(
     evaluator_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
     **kwargs,
-) -> AnswerFeedback:
+) -> IsFinalResponse:
 
     feedback = await messages_fns.astructured_extraction(
         messages=messages,
         client=evaluator_client,
         model=evaluator_model,
-        output_class=AnswerFeedback,
+        output_class=IsFinalResponse,
         instructor_mode=instructor_mode,
         **kwargs,
     )
@@ -124,9 +127,9 @@ async def astream_agentic_workflow(
     last_user_message = messages[-1]
 
     while step <= max_step:
-        logger.debug(f"Starting step {step}")
-
         step += 1
+
+        logger.debug(f"Starting step {step}")
 
         # extract tools
         tool_calls = await aextract_tools(
@@ -137,32 +140,34 @@ async def astream_agentic_workflow(
             instructor_mode=tool_selector_instructor_mode,
             **kwargs,
         )
-        logger.debug(f"Tool calls: {tool_calls}")
-        for tool in tool_calls:
-            yield Event(
-                step=step,
-                type="tool_call",
-                id=str(uuid4()),
-                content=json.dumps(tool.get_tool_call(), ensure_ascii=False),
+
+        if len(tool_calls) > 0:
+            logger.debug(f"Tool calls: {tool_calls}")
+            for tool in tool_calls:
+                yield Event(
+                    step=step,
+                    type="tool_call",
+                    id=str(uuid4()),
+                    content=json.dumps(tool.get_tool_call(), ensure_ascii=False),
+                )
+
+            # call tool
+            tool_call_results = await acall_tools(tools=tool_calls)
+            logger.debug(f"Tool call results: {tool_call_results}")
+            # feed to chat model
+            tool_outputs_message = Message(
+                role="assistant",
+                content="\n".join(tool_call_results),
             )
 
-        # call tool
-        tool_call_results = await acall_tools(tools=tool_calls)
-        logger.debug(f"Tool call results: {tool_call_results}")
-        # feed to chat model
-        tool_outputs_message = Message(
-            role="assistant",
-            content="\n".join(tool_call_results),
-        )
+            yield Event(
+                step=step,
+                type="tool_output",
+                id=str(uuid4()),
+                content=tool_outputs_message.model_dump_json(),
+            )
 
-        yield Event(
-            step=step,
-            type="tool_output",
-            id=str(uuid4()),
-            content=tool_outputs_message.model_dump_json(),
-        )
-
-        messages.append(tool_outputs_message)
+            messages.append(tool_outputs_message)
 
         # stream chat model
         stream = messages_fns.astream_generate(
@@ -201,7 +206,7 @@ async def astream_agentic_workflow(
             break
 
         # self reflect
-        feedback = await aevaluate_results(
+        is_final = await aevaluate_results(
             messages=(
                 [system_message]
                 if system_message
@@ -213,18 +218,9 @@ async def astream_agentic_workflow(
             **kwargs,
         )
 
-        if feedback.answer_feedback is None:
+        if is_final.is_final_response is True:
             break
 
-        logger.debug(f"Feedback for step {step}: {feedback}")
-        yield Event(
-            step=step,
-            type="feedback",
-            id=str(uuid4()),
-            content=feedback.answer_feedback,
-        )
-
-        messages.append(Message(role="user", content=feedback.answer_feedback))
         logger.debug(f"Final messages for step {step}: {messages}")
 
     logger.info(f"Ending agentic workflow within {step} steps")
