@@ -108,6 +108,8 @@ async def astream_agentic_workflow(
     max_step=2,
     **kwargs,
 ) -> AsyncGenerator[Event, None]:
+    logger.info(f"Starting agentic workflow with {len(tools)} tools")
+    logger.info(f"Initial messages: {messages}")
 
     step = 0
 
@@ -122,6 +124,8 @@ async def astream_agentic_workflow(
     last_user_message = messages[-1]
 
     while step <= max_step:
+        logger.debug(f"Starting step {step}")
+
         step += 1
 
         # extract tools
@@ -133,7 +137,7 @@ async def astream_agentic_workflow(
             instructor_mode=tool_selector_instructor_mode,
             **kwargs,
         )
-
+        logger.debug(f"Tool calls: {tool_calls}")
         for tool in tool_calls:
             yield Event(
                 step=step,
@@ -144,7 +148,7 @@ async def astream_agentic_workflow(
 
         # call tool
         tool_call_results = await acall_tools(tools=tool_calls)
-
+        logger.debug(f"Tool call results: {tool_call_results}")
         # feed to chat model
         tool_outputs_message = Message(
             role="assistant",
@@ -187,6 +191,7 @@ async def astream_agentic_workflow(
         )
 
         final_step_message = Message(role="assistant", content=final_content)
+        logger.debug(f"Final step {step} message: {final_step_message}")
 
         # add results to messages
         messages.append(final_step_message)
@@ -211,6 +216,7 @@ async def astream_agentic_workflow(
         if feedback.answer_feedback is None:
             break
 
+        logger.debug(f"Feedback for step {step}: {feedback}")
         yield Event(
             step=step,
             type="feedback",
@@ -219,5 +225,7 @@ async def astream_agentic_workflow(
         )
 
         messages.append(Message(role="user", content=feedback.answer_feedback))
+        logger.debug(f"Final messages for step {step}: {messages}")
 
-    print("messages", messages)
+    logger.info(f"Ending agentic workflow within {step} steps")
+    logger.info(f"Final response: {messages[-1].content}")
