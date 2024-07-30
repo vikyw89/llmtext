@@ -31,8 +31,6 @@ async def test_tool_class():
         choice: Annotated[tools, Field(description="Selected tool")] = []  # type: ignore
         response: Annotated[str, Field(description="Response to be sent to user")]
 
-    res = await astructured_extraction(
-        text="what's the weather today ?", output_class=ToolSelector
-    )
+    res = await astructured_extraction(text="Find a news", output_class=ToolSelector)
 
     print(res)

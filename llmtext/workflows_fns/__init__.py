@@ -4,6 +4,7 @@ import os
 from typing import (
     AsyncGenerator,
 )
+from asyncer import asyncify
 from openai import AsyncOpenAI
 from llmtext.data_types import (
     Event,
@@ -33,7 +34,7 @@ async def aextract_tools(
     if len(tools) == 0:
         return []
 
-    tool_selector = tools_to_tool_selector(tools=tools)
+    tool_selector = await asyncify(tools_to_tool_selector)(tools=tools)
 
     tool_selector = await messages_fns.astructured_extraction(
         messages=messages,
@@ -63,7 +64,7 @@ async def acall_tools(
             parsed_tools_output.append(str(tool_output))
         else:
             parsed_tools_output.append(
-                json.dumps(tool_output, ensure_ascii=False, default=str)
+                await asyncify(json.dumps)(tool_output, ensure_ascii=False, default=str)
             )
 
     return parsed_tools_output
@@ -148,7 +149,9 @@ async def astream_agentic_workflow(
                     step=step,
                     type="tool_call",
                     id=str(uuid4()),
-                    content=json.dumps(tool.get_tool_call(), ensure_ascii=False),
+                    content=await asyncify(json.dumps)(
+                        tool.get_tool_call(), ensure_ascii=False
+                    ),
                 )
 
             # call tool

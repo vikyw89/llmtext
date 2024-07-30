@@ -10,21 +10,21 @@ async def test_aextract_tools():
     from llmtext.data_types import RunnableTool, Message
     from llmtext.workflows_fns import aextract_tools
 
-    class SearchInternetTool(RunnableTool):
+    class SearchForWeather(RunnableTool):
         query: Annotated[str, Field(description="search query")]
 
         async def arun(self) -> str:
             return f"there's no result for: {self.query}"
 
     tools = await aextract_tools(
-        messages=[Message(role="user", content="what's the weather today ?")],
-        tools=[SearchInternetTool],
+        messages=[Message(role="user", content="what's the weather today ? Call ")],
+        tools=[SearchForWeather],
     )
 
     assert len(tools) >= 1
 
     for tool in tools:
-        assert isinstance(tool, SearchInternetTool)
+        assert isinstance(tool, SearchForWeather)
 
 
 @pytest.mark.asyncio
