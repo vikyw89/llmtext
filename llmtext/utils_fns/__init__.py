@@ -9,7 +9,7 @@ def messages_to_openai_messages(
 ) -> list[ChatCompletionMessageParam]:
     parsed_messages = []
     for message in messages:
-        parsed_messages.append({"role": message.role, "content": message.content})
+        parsed_messages.append({"role": message["role"], "content": message["content"]})
     return parsed_messages
 
 

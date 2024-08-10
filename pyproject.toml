@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llmtext"
-version = "5.0.7"
+version = "6.0.0"
 description = "A simple llm library."
 authors = ["vikyw89 <vikyw89@gmail.com>"]
 readme = "README.md"
@@ -9,9 +9,8 @@ include = ["scripts"]
 [tool.poetry.dependencies]
 python = "^3.10"
 python-dotenv = "^1.0.0"
-instructor = "^1.3.0"
-pydantic = "2.7.*"
-asyncer = "^0.0.7"
+instructor = "^1.3.7"
+
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"
@@ -30,6 +29,7 @@ publish = "scripts.publish:run"
 test = "scripts.test:run"
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 log_file = "pytest.log"
 log_file_level = "DEBUG"
 log_file_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
