@@ -7,7 +7,6 @@ from llmtext.data_types import (
     Event,
     Message,
     RunnableTool,
-    ToolCall,
     ToolOutput,
 )
 from llmtext.llm import LLM
