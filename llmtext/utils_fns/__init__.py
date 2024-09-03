@@ -1,7 +1,7 @@
 from typing import Type, Union, Annotated
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
-from llmtext.data_types import Message, RunnableTool
+from llmtext.types import Message, RunnableTool
 
 
 def messages_to_openai_messages(

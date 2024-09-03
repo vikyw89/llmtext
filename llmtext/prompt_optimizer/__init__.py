@@ -1,7 +1,8 @@
 import asyncio
+from csv import DictWriter
 import os
-from typing import Annotated
-from openai import AsyncOpenAI, BaseModel
+from typing import Annotated, Awaitable, Callable
+from openai import AsyncOpenAI
 from pydantic import Field
 import logging
 
@@ -12,51 +13,28 @@ CLIENT = AsyncOpenAI(
 )
 
 
-async def agenerate_prompt(prompt: str, client=CLIENT) -> str:
+async def agenerate_prompt(
+    example_inputs: list[str], example_outputs: list[str], client=CLIENT
+) -> str:
+    logger.debug(f"Generating prompt: {example_inputs} -> {example_outputs}")
     from llmtext.messages_fns import agenerate
 
-    SYSTEM_PROMPT = """Here's a refined version of the LLM prompt:
-
-# AI Prompt Engineering Specialist
-
-You are an AI expert in crafting optimal prompts for language models, with a focus on clarity, effectiveness, and ethical considerations.
-
-## Core Capabilities:
-- Analyze user requirements for AI assistants
-- Generate precise, tailored system prompts
-- Optimize for specific roles, tasks, and target audiences
-
-## Key Skills:
-- Advanced natural language processing
-- AI behavior and interaction modeling
-- Task-specific prompt optimization
-- Ethical AI design principles
-
-## Traits:
-- Analytical and meticulous
-- Creative problem-solver
-- Adaptable to diverse AI applications
-
-## Ethical Framework:
-- Prioritize safety and beneficial outcomes
-- Avoid prompts that could lead to harmful or biased behavior
-- Uphold user privacy and data protection standards
-
-## Operational Protocol:
-1. Analyze user's AI assistant requirements
-2. Craft a system prompt incorporating:
-   - Clear role definition
-   - Concise function and expertise summary
-   - Defined traits and communication style
-   - Ethical guidelines and limitations
-   - Task-specific focus
-   - Direct, unambiguous language
-   - Audience-appropriate content
-3. Use markdown for enhanced readability
-4. Explain design choices if requested
-
-Respond with well-structured, effective prompts tailored to user specifications.
+    SYSTEM_PROMPT = """Let's work this out in a step by step way to be sure we have the right answer.
+Your task is to create an LLM prompt that acts as a function generator. 
+Given an example input and an example output, generate a clear and concise prompt that, when given to an LLM, will produce similar outputs for similar inputs. 
+The prompt should describe the task, incorporate the example, provide instructions for handling similar inputs, and be both general enough for variations and specific enough for consistent results. 
+Return only the generated prompt, without any additional explanation or formatting.
 """
+
+    example_pairs = ""
+    for input, output in zip(example_inputs, example_outputs):
+        example_pairs += f"""# Example input
+{input}
+# Example Output
+{output}
+
+"""
+
     completion = await agenerate(
         messages=[
             {
@@ -65,148 +43,104 @@ Respond with well-structured, effective prompts tailored to user specifications.
             },
             {
                 "role": "user",
-                "content": prompt,
+                "content": example_pairs,
             },
         ],
         client=client,
-    )
-
-    return completion.strip("```")
-
-
-class Feedback(BaseModel):
-    """Feedback to the answer"""
-
-    feedback: Annotated[str, Field(description="Feedback to the answer")]
-    score: Annotated[
-        int, Field(description="Score of the answer, from 0 to 5, 0 bad 5 perfect")
-    ]
-
-
-async def arun_prompt(system_prompt: str, input: str, client=CLIENT) -> str:
-    from llmtext.messages_fns import agenerate
-
-    completion = await agenerate(
-        messages=[
-            {
-                "role": "system",
-                "content": system_prompt,
-            },
-            {
-                "role": "user",
-                "content": input,
-            },
-        ],
-        client=client,
+        temperature=0.8,
     )
 
     return completion
 
 
-async def arun_feedback(prompt: str, input: str, client=CLIENT) -> Feedback:
-    from llmtext.messages_fns import astructured_extraction
+async def arun_prompt(
+    system_prompt: str, example_inputs: list[str], client=CLIENT
+) -> list[str]:
+    from llmtext.messages_fns import agenerate
 
-    feedback = await astructured_extraction(
-        messages=[
-            {
-                "role": "system",
-                "content": prompt,
-            },
-            {
-                "role": "user",
-                "content": input,
-            },
-        ],
-        client=client,
-        output_class=Feedback,
-    )
+    tasks = []
+    for example_input in example_inputs:
+        tasks.append(
+            agenerate(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": example_input},
+                ],
+                client=client,
+            )
+        )
 
-    return feedback
+    results: list[str] = await asyncio.gather(*tasks)
+
+    return results
 
 
 async def agenerate_prompt_and_optimize(
-    prompt: str,
-    sequence_count: Annotated[
-        int, Field(description="Number of sequential iterations")
+    example_inputs: list[str],
+    example_outputs: list[str],
+    scoring_fn: Annotated[
+        Callable[[list[str], list[str], list[str]], Awaitable[float]],
+        "A function that scores prompts",
     ],
     parallel_count: Annotated[
         int,
         Field(
             description="Number of search exploration to be run in parallel for each iteration"
         ),
-    ],
+    ] = 1,
     client=CLIENT,
 ) -> str:
     logger.debug(f"""# Generating prompt and optimizing:
-
-# Prompt
-{prompt}
-
-# Sequence Count
-{sequence_count}
-
 # Parallel Count
 {parallel_count}
 """)
-    from csv import DictWriter
-
-    with open("prompts_and_score.csv", mode="w") as f:
-        writer = DictWriter(f, fieldnames=["prompt", "score", "feedback"])
-        writer.writeheader()
-
-    depth = 0
-
-    while True:
-        logger.debug(f"Depth: {depth}")
-        logger.debug(f"Prompt:\n{prompt}")
-        depth += 1
-
-        # break case
-        if depth > sequence_count:
-            break
-
-        # generate prompt
-        tasks = []
-        for _ in range(parallel_count):
-            tasks.append(agenerate_prompt(prompt, client=client))
-
-        prompts: list[str] = await asyncio.gather(*tasks)
-
-        # score the prompts
-        tasks = []
-        for i in range(len(prompts)):
-            tasks.append(
-                arun_feedback(
-                    prompt=prompts[i],
-                    input=prompt,
-                    client=client,
-                )
+    logger.debug(f"Generating prompt: {example_inputs[0]} -> {example_outputs[0]}")
+    tasks = []
+    for _ in range(parallel_count):
+        tasks.append(
+            agenerate_prompt(
+                example_inputs=example_inputs,
+                example_outputs=example_outputs,
+                client=client,
             )
+        )
 
-        feedbacks: list[Feedback] = await asyncio.gather(*tasks)
+    prompts = await asyncio.gather(*tasks)
 
-        # select the best prompt
-        best_prompt = ""
-        best_score = 0
-        best_feedback = Feedback(feedback="", score=0)
+    tasks = []
+    for prompt in prompts:
+        tasks.append(
+            arun_prompt(
+                system_prompt=prompt,
+                example_inputs=example_inputs,
+                client=client,
+            )
+        )
 
-        for i in range(len(feedbacks)):
-            with open("prompts_and_score.csv", mode="a+") as f:
-                writer = DictWriter(f, fieldnames=["prompt", "score", "feedback"])
-                writer.writerow(
-                    {
-                        "prompt": prompts[i],
-                        "score": feedbacks[i].score,
-                        "feedback": feedbacks[i].feedback,
-                    }
-                )
-            if feedbacks[i].score > best_score:
-                best_prompt = prompts[i]
-                best_score = feedbacks[i].score
-                best_feedback = feedbacks[i]
+    outputs = await asyncio.gather(*tasks)
 
-        prompt = f"""# Refine the following llm prompt, using this feedback {best_feedback.feedback}
-        
-{best_prompt}
-"""
-    return prompt
+    logger.debug("Scoring prompts")
+
+    # score prompts
+    best_score = 0.0
+    best_prompt = ""
+    with open("prompts_scores.csv", mode="a+") as f:
+        writer = DictWriter(
+            f,
+            fieldnames=[
+                "prompt",
+                "score",
+            ],
+        )
+        for prompt, output in zip(prompts, outputs):
+            score = await scoring_fn(example_inputs, example_outputs, output)
+            logger.debug(f"""Prompt
+{prompt}
+# Score
+{score}""")
+            writer.writerow({"prompt": prompt, "score": score})
+            if score >= best_score:
+                best_score = score
+                best_prompt = prompt
+
+    return best_prompt

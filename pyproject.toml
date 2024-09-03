@@ -8,9 +8,8 @@ include = ["scripts"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-python-dotenv = "^1.0.0"
-instructor = "^1.3.7"
-
+python-dotenv = "*"
+instructor = "^1.4.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"

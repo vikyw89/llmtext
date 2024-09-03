@@ -1,10 +1,11 @@
 import os
 from typing import AsyncGenerator, Type
-from llmtext.data_types import Message
+from llmtext.types import Message
 from instructor.client import T
 from openai import AsyncOpenAI
 import instructor
 from llmtext.utils_fns import messages_to_openai_messages
+
 
 async def agenerate(
     messages: list[Message],
@@ -86,7 +87,6 @@ async def astream_structured_extraction(
     instructor_mode: instructor.Mode = instructor.Mode.MD_JSON,
     **kwargs,
 ) -> AsyncGenerator[T, None]:
-
     parsed_messages = messages_to_openai_messages(messages=messages)
 
     structured_client = instructor.from_openai(client=client, mode=instructor_mode)

@@ -83,11 +83,7 @@ class LLM:
         text: str,
         output_class: Type[T],
     ) -> T:
-        patched_client = instructor.from_openai(
-            self.client,
-            mode=self.instructor_mode,
-        )
-        completion = await patched_client.chat.completions.create(
+        completion = await self.structured_client.chat.completions.create(
             messages=[{"role": "user", "content": text}],
             model=self.model,
             response_model=output_class,

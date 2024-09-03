@@ -39,7 +39,7 @@ Here is an example of how to use the asynchronous text generation functionality:
 
 ```python
 from llmtext.messages_fns import agenerate
-from llmtext.data_types import Message
+from llmtext.types import Message
 
 async def main():
     text = await agenerate(
@@ -56,9 +56,9 @@ asyncio.run(main())
 Here is an example of how to use the agentic workflow functionality:
 
 ```python
-from llmtext.data_types import Message
+from llmtext.types import Message
 from llmtext.workflows_fns import astream_agentic_workflow
-from llmtext.data_types import RunnableTool
+from llmtext.types import RunnableTool
 from typing import Annotated
 from pydantic import Field
 
@@ -102,7 +102,7 @@ asyncio.run(main())
   - **tools/**: Tests for tool functionalities.
 - **llmtext/**: Contains the main codebase.
   - **utils_fns/**: Utility functions for converting messages and tools.
-  - **data_types/**: Data types used throughout the codebase.
+  - **types/**: Data  used throughout the codebase.
   - **messages_fns/**: Message-related functions.
   - **texts_fns/**: Text-related functions.
   - **workflows_fns/**: Workflow-related functions.

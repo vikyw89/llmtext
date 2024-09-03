@@ -2,16 +2,16 @@ import asyncio
 from typing import AsyncGenerator, Type
 from uuid import uuid4
 
-from llmtext.data_types import (
+from llmtext.types import (
     Checkpoint,
     Event,
     Message,
     RunnableTool,
     ToolOutput,
+    IsFinalResponse,
 )
 from llmtext.llm import LLM
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
-from llmtext.data_types import IsFinalResponse
 import logging
 
 logger = logging.getLogger(__name__)
@@ -115,7 +115,7 @@ class Agent:
                 type="message",
                 content=Message(role="assistant", content=final_message_content),
             )
-            
+
             # run next step
 
     async def _astream_chat_llm(self) -> AsyncGenerator[str, None]:
@@ -170,5 +170,5 @@ class Agent:
                 "content": "\n".join([o.output for o in parsed_tool_output]),
             }
         )
-        
+
         return parsed_tool_output
